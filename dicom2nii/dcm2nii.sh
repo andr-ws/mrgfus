@@ -1,0 +1,15 @@
+source=/Volumes/LA_4TB/mrgfus/sourcedata
+raw=/Volumes/LA_4TB/mrgfus/rawdata
+
+for dir in ${source}/sub-*; do
+  sub=$(basename ${dir})
+  
+  mkdir ${source}/${sub}/convert
+
+  /Applications/MRIcroGL.app/Contents/Resources/dcm2niix \
+    -o ${source}/${sub}/convert/ \
+    -z y \
+    -f ${sub}_%t_%d \
+    ${dir}
+
+done
