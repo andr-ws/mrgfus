@@ -9,7 +9,7 @@ read -p "Enter the base path of the dataset (e.g., ./path/2/data): " base
 # Base directory structure
 raw="${base}/rawdata"
 der="${base}/derivatives"
-dwi="${der}/data/dwi"
+dwi="${der}/dwi"
 
 find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
   # extract subject-id and create directory
