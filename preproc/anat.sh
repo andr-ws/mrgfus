@@ -2,7 +2,7 @@
 
 # Raw T1w/FGATIR handling, minimal pre-processing (reorientation, neck crop, and brain extraction), bias-correction and coreg
 
-export FREESURFER_HOME=/Applications/freesurfer
+export FREESURFER_HOME=/Applications/freesurfer/dev
 source $FREESURFER_HOME/SetUpFreeSurfer.sh
 
 # Ensure the script is run with at least one argument
@@ -28,47 +28,40 @@ derivatives="${base}/derivatives"
 find "${rawdata}" -type d -name 'sub-*' | sort -V | while read -r dir; do
   # Extract subject-id and create directory
   sub=$(basename "${dir}")
-  mkdir -p "${derivatives}/anat/${sub}/proc"
 
   for ses in ses-preop ses1-postop ses2-postop; do
+    
+    mkdir -p "${derivatives}/anat/${sub}/${ses}/"
 
     for modality in T1w FGATIR; do
       echo "Reorienting and cropping ${sub}..."
       fslreorient2std \
         "${rawdata}/${sub}/${ses}/anat/${sub}_acq-${modality}.nii.gz" \
-        "${derivatives}/anat/${sub}/proc/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
+        "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
 	
       robustfov \
-        -i "${derivatives}/anat/${sub}/proc/${sub}_desc-min_proc_${ses}-${modality}.nii.gz" \
-        -r "${derivatives}/anat/${sub}/proc/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
-
-      echo "Biasfield correcting ${sub}..."
-      N4BiasFieldCorrection \
-        -d 3 \
-        -i "${derivatives}/anat/${sub}/proc/${sub}_desc-min_proc_${ses}-${modality}.nii.gz" \
-        -o "${derivatives}/anat/${sub}/proc/${sub}_desc-bias_cor_${ses}-${modality}.nii.gz"
+        -i "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz" \
+        -r "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
     done
 
-    for image in min_proc bias_cor; do
-      # Co-register T2w to T1w MRI
-      echo "Co-registering FGATIR to T1w for ${sub}..."
-      antsRegistrationSyNQuick.sh \
-        -d 3 \
-        -f "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-T1w.nii.gz" \
-        -m "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-FGATIR.nii.gz" \
-        -o "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-FGATIR_space-T1w"
+    # Co-register FGATIR to T1w
+    echo "Co-registering FGATIR to T1w for ${sub}..."
+      
+    antsRegistrationSyNQuick.sh \
+    	-d 3 \
+        -f "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-T1w.nii.gz" \
+        -m "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR.nii.gz" \
+        -o "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1w"
 
-      mv "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-FGATIR_space-T1wWarped.nii.gz" \
-      "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-FGATIR_space-T1w.nii.gz"
+    mv "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1wWarped.nii.gz" "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1w.nii.gz"
     
-      echo "Brain extracting ${sub}..."
+    echo "Brain extracting ${sub}..."
 
-      for modality in T1w FGATIR; do
-        mri_synthstrip \
-          --image "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-${modality}.nii.gz" \
-          --out "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-${modality}_brain.nii.gz" \
-          --mask "${derivatives}/anat/${sub}/proc/${sub}_desc-${image}_${ses}-${modality}_brain_mask.nii.gz"
-      done
+    for modality in T1w FGATIR_space-T1w; do
+    	mri_synthstrip \
+          --image "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}.nii.gz" \
+          --out "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}_brain.nii.gz" \
+          --mask "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}_brain_mask.nii.gz"
     done
   done
 done
