@@ -53,15 +53,19 @@ find "${rawdata}" -type d -name 'sub-*' | sort -V | while read -r dir; do
         -m "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR.nii.gz" \
         -o "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1w"
 
-    mv "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1wWarped.nii.gz" "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1w.nii.gz"
+    mv "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR_space-T1wWarped.nii.gz" "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-FGATIR.nii.gz"
     
     echo "Brain extracting ${sub}..."
 
-    for modality in T1w FGATIR_space-T1w; do
+    for modality in T1w FGATIR; do
     	mri_synthstrip \
           --image "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}.nii.gz" \
           --out "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}_brain.nii.gz" \
           --mask "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}_brain_mask.nii.gz"
     done
+
+  rm -r ${derivatives}/anat/${sub}/${ses}/*warp*
+  rm -r ${derivatives}/anat/${sub}/${ses}/*.mat*
+  
   done
 done
