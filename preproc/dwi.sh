@@ -47,7 +47,7 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
     		-force
 
     	# Pad (rather than crop) a slice if the data is odd
-    	dim=$(fslinfo "${raw}/${sub}/dwi/${ses}/${sub}_dwi.nii.gz" | awk '/^dim3/ {print $2}')
+    	dim=$(fslinfo "${raw}/${sub}/${ses}/dwi/${sub}_dwi.nii.gz" | awk '/^dim3/ {print $2}')
 
     	# Test if dimension is even
 	if [ $((dim%2)) -eq 0 ]; then
