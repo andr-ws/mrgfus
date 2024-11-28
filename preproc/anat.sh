@@ -37,11 +37,11 @@ find "${rawdata}" -type d -name 'sub-*' | sort -V | while read -r dir; do
       echo "Reorienting and cropping ${sub}..."
       fslreorient2std \
         "${rawdata}/${sub}/${ses}/anat/${sub}_acq-${modality}.nii.gz" \
-        "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
+        "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}.nii.gz"
 	
       robustfov \
-        -i "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz" \
-        -r "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc_${ses}-${modality}.nii.gz"
+        -i "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}.nii.gz" \
+        -r "${derivatives}/anat/${sub}/${ses}/${sub}_desc-min_proc-${modality}.nii.gz"
     done
 
     # Co-register FGATIR to T1w
