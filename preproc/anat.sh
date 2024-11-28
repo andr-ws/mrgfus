@@ -2,6 +2,9 @@
 
 # Raw T1w/FGATIR handling, minimal pre-processing (reorientation, neck crop, and brain extraction), bias-correction and coreg
 
+export FREESURFER_HOME=/Applications/freesurfer
+source $FREESURFER_HOME/SetUpFreeSurfer.sh
+
 # Ensure the script is run with at least one argument
 if [ "$#" -eq 0 ]; then
     echo "Usage: bash $0 <path/to/dataset>"
