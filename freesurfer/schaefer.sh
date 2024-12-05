@@ -94,16 +94,3 @@ for dir in ${dwi}/sub-*; do
   #rm ${dir}/fba/tractograms/${sub}.tck
 
 done
-
-
-
-
-
-
-
-
-
-
-
-
-
