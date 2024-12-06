@@ -77,7 +77,7 @@ for dir in ${dwi}/sub-*; do
       -act ${dir}/tractograms/${sub}_5tt.mif
 
     tck2connectome \
-      ${dir}/fba/tractograms//ACT/${sub}_SIFT.tck \
+      ${dir}/fba/tractograms/ACT/${sub}_SIFT.tck \
       parc_image.mif \
       ${fba}/subjects/${sub}/ACT/Schaefer_tck_400.csv \
       -symmetric \
