@@ -8,6 +8,7 @@ raw=~/imaging/datasets/mrgfus/rawdata
 der=~/imaging/datasets/mrgfus/derivatives
 dwi=${der}/dwi
 anat=${der}/anat
+
 export SUBJECTS_DIR=${der}/freesurfer
 
 for dir in ${dwi}/sub-*; do
@@ -34,19 +35,19 @@ for dir in ${dwi}/sub-*; do
     mkdir ${SUBJECTS_DIR}/${sub}/${ses}/MIND
 
     # ACT
-    mkdir ${dir}/fba/tractograms
+    mkdir ${dir}/tractograms
 
     # Use brain extracted FS output
     5ttgen \
       fsl \
       ${SUBJECTS_DIR}/${ses}/${sub}_brain.nii.gz \
-      ${dir}/fba/tractograms/${sub}_5tt.mif \
+      ${dir}/tractograms/${sub}_5tt.mif \
       -premasked \
       -force
 
     5tt2gmwmi \
-      ${dir}/fba/tractograms/${sub}_5tt.mif \
-      ${dir}/fba/tractograms/${sub}_gmwmi.mif \
+      ${dir}/tractograms/${sub}_5tt.mif \
+      ${dir}/tractograms/${sub}_gmwmi.mif \
       -force
 
     tckgen \
@@ -54,7 +55,7 @@ for dir in ${dwi}/sub-*; do
       -maxlen 250 \
       -minlen 10 \
       -power 1.0 \
-      ${dir}/fba/proc/${sub}_wmfod_norm.mif \
+      ${dir}/${sub}_wmfod_norm.mif \
       -seed_gmwmi ${dir}/fba/proc/${sub}_gmwmi.mif \
       -cutoff 0.10  \
       -select 20000000 \
