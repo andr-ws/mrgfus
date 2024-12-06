@@ -14,6 +14,7 @@ for dir in ${dwi}/sub-*; do
   sub=$(basename ${dir})
 
   for ses in ses-preop ses1-postop ses2-postop; do
+    ses_dir=${SUBJECTS_DIR}/${sub}/${ses}
     # Resample the Schaefer parcellation to subject surface - generate annot files for multiple resolutions
     for rois in 400 600 800; do
       for h in lh rh; do
@@ -22,28 +23,18 @@ for dir in ${dwi}/sub-*; do
           --srcsubject fsaverage \
           --trgsubject ${sub}_${ses} \
           --sval-annot ${SUBJECTS_DIR}/fsaverage/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot \
-          --tval ${SUBJECTS_DIR}/${sub}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
+          --tval ${ses_dir}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
       done
       
-          
     # Extrapolate FS metrics (MIND networks)
-    --> Execute code here.
+    python3 ~/imaging/code/projects/mrgfus/MIND_exec.py ${SUBJECTS_DIR}/${sub} ${ses}
+
+    # MIND network output
+    mkdir ${SUBJECTS_DIR}/${sub}/${ses}/MIND
 
     # ACT
     mkdir ${dir}/fba/tractograms
 
-    # NOT SURE IF REQUIRED YET
-    # Map b0 to T1 (rigid)
-    #antsRegistrationSyN.sh \
-      #  -d 3 \
-      #  -f T1_bias-cor \
-      #  -m eddy_b0 \
-      #  -t r
-    # Invert
-    #antsApplyTransforms \
-      #  -i T1_bias-cor \
-      #  -r eddy_b0 \
-    
     # Use brain extracted FS output
     5ttgen \
       fsl \
