@@ -93,9 +93,18 @@ for dir in ${dwi}/sub-*; do
       ${dir}/${ses}/fod/tmp_${sub}_dwi_us.mif \
       ${fba}/group_response_wm.txt \
       ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif \
-
       ${fba}/group_response_gm.txt \
       ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif \
+      ${fba}/group_response_csf.txt \
+      ${dir}/${ses}/fod/tmp_${sub}_csffod.txt \
+      -mask ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif
 
+    mtnormalise \
+      ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif ${dir}/${ses}/fod/${sub}_wmfod.mif \
+      ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif ${dir}/${ses}/fod/${sub}_gmfod.mif
+      ${dir}/${ses}/fod/tmp_${sub}_csffod.mif ${dir}/${ses}/fod/${sub}_csffod.mif
 
+    rm ${dir}/${ses}/fod/*tmp*
+  done
+done
 
