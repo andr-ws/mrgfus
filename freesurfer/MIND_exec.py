@@ -12,6 +12,8 @@ session = sys.argv[2]
 
 # Features and parcellation
 features = ['CT', 'MC', 'Vol', 'SD', 'SA']
+
+# THIS NEEDS TO ITERATE THROUGH 200 400 600 PARCELS
 parcellation = 'Schaefer2018_400Parcels_7Networks_order.annot'
 
 # Compute MIND network
