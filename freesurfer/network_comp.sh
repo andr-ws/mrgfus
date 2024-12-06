@@ -53,47 +53,48 @@ for dir in ${dwi}/sub-*; do
       # Compute MIND networks from freesurfer output
       # Assumes MIND code has been sourced [git clone https://github.com/isebenius/MIND.git ]
       python3 ~/imaging/code/projects/mrgfus/MIND_exec.py ${SUBJECTS_DIR}/${sub} ${ses} ${rois}
-
-      # Use brain extracted FS output for ACT
-      5ttgen \
-        fsl \
-        ${SUBJECTS_DIR}/${ses}/${sub}_brain.nii.gz \
-        ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
-        -premasked \
-        -force
-
-      5tt2gmwmi \
-        ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
-        ${dir}/${ses}/fba/tractogram/${sub}_gmwmi.mif \
-        -force
-
-      tckgen \
-        -angle 22.5 \
-        -maxlen 250 \
-        -minlen 10 \
-        -power 1.0 \
-        ${dir}/${ses}/fba/fod/${sub}_wmfod.mif \
-        -seed_gmwmi ${dir}/${ses}/fba/tractogram/${sub}_gmwmi.mif \
-        -cutoff 0.10  \
-        -select 20000000 \
-        ${dir}/${ses}/fba/tractogram/${sub}.tck \
-        -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
-        -force
-
-      tcksift2 \
-        ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
-        ${dir}/${ses}/fba/fod/${sub}_wmfod.mif \
-        ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt \
-        -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
-        -remove_untracked
-
-      tck2connectome \
-        ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
-        parc_image.mif \
-        ${dir}/${ses}/fba/tractogram/${sub}_Schaefer2018_400Parcels_7Networks.csv \
-        -symmetric \
-        -tck_weights_in ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt
+    
     done
+
+    # Use brain extracted FS output for ACT
+    5ttgen \
+      fsl \
+      ${SUBJECTS_DIR}/${ses}/${sub}_brain.nii.gz \
+      ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
+      -premasked \
+      -force
+
+    5tt2gmwmi \
+      ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
+      ${dir}/${ses}/fba/tractogram/${sub}_gmwmi.mif \
+      -force
+
+    tckgen \
+      -angle 22.5 \
+      -maxlen 250 \
+      -minlen 10 \
+      -power 1.0 \
+      ${dir}/${ses}/fba/fod/${sub}_wmfod.mif \
+      -seed_gmwmi ${dir}/${ses}/fba/tractogram/${sub}_gmwmi.mif \
+      -cutoff 0.10  \
+      -select 20000000 \
+      ${dir}/${ses}/fba/tractogram/${sub}.tck \
+      -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
+      -force
+
+    tcksift2 \
+      ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
+      ${dir}/${ses}/fba/fod/${sub}_wmfod.mif \
+      ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt \
+      -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
+      -remove_untracked
+
+    tck2connectome \
+      ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
+      parc_image.mif \
+      ${dir}/${ses}/fba/tractogram/${sub}_Schaefer2018_400Parcels_7Networks.csv \
+      -symmetric \
+      -tck_weights_in ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt
     # Remove original tractogram
     #rm ${dir}/fba/tractograms/${sub}.tck
   done
