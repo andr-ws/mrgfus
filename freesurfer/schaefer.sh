@@ -20,7 +20,7 @@ for dir in ${dwi}/sub-*; do
         mri_surf2surf \
           --hemi ${h} \
           --srcsubject fsaverage \
-          --trgsubject ${sub} \
+          --trgsubject ${sub}_${ses} \
           --sval-annot ${SUBJECTS_DIR}/fsaverage/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot \
           --tval ${SUBJECTS_DIR}/${sub}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
       done
