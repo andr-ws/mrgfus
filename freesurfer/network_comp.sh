@@ -26,7 +26,8 @@ for dir in ${dwi}/sub-*; do
           --tval ${ses_dir}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
       done
       
-    # Extrapolate FS metrics (MIND networks)
+    # Compute MIND networks from FS outputs
+    # Assumes MIND code has been sourced [git clone https://github.com/isebenius/MIND.git ]
     python3 ~/imaging/code/projects/mrgfus/MIND_exec.py ${SUBJECTS_DIR}/${sub} ${ses}
 
     # MIND network output
