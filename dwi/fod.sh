@@ -77,12 +77,12 @@ for dir in ${dwi}/sub-*; do
 done
 
 fba=${base}/derivatives/fba
-mkdir ${fba}
+mkdir -p ${fba}/response
 
 # Create tissue RF's
 
 for tissue in wm gm csf; do
-  responsemean ${dwi}/*/*/fod/response_${tissue}.txt ${fba}/group_response_${tissue}.txt
+  responsemean ${dwi}/*/*/fod/response_${tissue}.txt ${fba}/response/group_response_${tissue}.txt
 done
 
 for dir in ${dwi}/sub-*; do
@@ -91,11 +91,11 @@ for dir in ${dwi}/sub-*; do
   for ses in ses-preop ses1-postop ses2-postop; do
     ss3t_csd_beta1 \
       ${dir}/${ses}/fod/tmp_${sub}_dwi_us.mif \
-      ${fba}/group_response_wm.txt \
+      ${fba}/response/group_response_wm.txt \
       ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif \
-      ${fba}/group_response_gm.txt \
+      ${fba}/response/group_response_gm.txt \
       ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif \
-      ${fba}/group_response_csf.txt \
+      ${fba}/response/group_response_csf.txt \
       ${dir}/${ses}/fod/tmp_${sub}_csffod.txt \
       -mask ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif
 
