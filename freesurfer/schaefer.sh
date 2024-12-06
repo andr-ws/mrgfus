@@ -84,14 +84,14 @@ for dir in ${dwi}/sub-*; do
       ${dir}/fba/tractograms/${sub}.txt \
       -act ${dir}/tractograms/${sub}_5tt.mif
 
-  tck2connectome \
-    ${dir}/fba/tractograms//ACT/${sub}_SIFT.tck \
-    parc_image.mif \
-    ${fba}/subjects/${sub}/ACT/Schaefer_tck_400.csv \
-    -symmetric \
-    -tck_weights_in ${dir}/fba/tractograms/${sub}.txt
+    tck2connectome \
+      ${dir}/fba/tractograms//ACT/${sub}_SIFT.tck \
+      parc_image.mif \
+      ${fba}/subjects/${sub}/ACT/Schaefer_tck_400.csv \
+      -symmetric \
+      -tck_weights_in ${dir}/fba/tractograms/${sub}.txt
 
-  # Remove original tractogram
-  #rm ${dir}/fba/tractograms/${sub}.tck
-
+    # Remove original tractogram
+    #rm ${dir}/fba/tractograms/${sub}.tck
+  done
 done
