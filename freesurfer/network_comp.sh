@@ -32,15 +32,16 @@ for dir in ${dwi}/sub-*; do
           --tval ${ses_dir}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
       done
       
+      # Create and convert schaefer volume(s)
       mri_aparc2aseg \
         --s ${sub}_${ses} \
         --annot Schaefer2018_${rois}Parcels_7Networks_order \
         ${ses_dir}/mri/Schaefer2018_${rois}Parcels_7Networks_order.mgz
-      
       mrconvert \
         ${ses_dir}/mri/Schaefer2018_${rois}Parcels_7Networks_order.mgz \
         ${dir}/${ses}/fba/tractogram/Schaefer2018_${rois}Parcels_7Networks_order.mif
 
+      # Convert parcellation labels
       labelconvert \
         ${dir}/${ses}/fba/tractogram/Schaefer2018_${rois}Parcels_7Networks_order.mif \
         ${lut_path} \
@@ -50,8 +51,7 @@ for dir in ${dwi}/sub-*; do
       # MIND network output
       mkdir ${SUBJECTS_DIR}/${sub}/${ses}/MIND
         
-      # Compute MIND networks from freesurfer output
-      # Assumes MIND code has been sourced [git clone https://github.com/isebenius/MIND.git ]
+      # Compute MIND networks from freesurfer output [assumes sourced - git clone https://github.com/isebenius/MIND.git ]
       python3 ~/imaging/code/projects/mrgfus/MIND_exec.py ${SUBJECTS_DIR}/${sub} ${ses} ${rois}
     
     done
@@ -63,12 +63,14 @@ for dir in ${dwi}/sub-*; do
       ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
       -premasked \
       -force
-
+      
+    # Create grey-white interface
     5tt2gmwmi \
       ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
       ${dir}/${ses}/fba/tractogram/${sub}_gmwmi.mif \
       -force
-
+      
+    # Compute a tractogram with ACT
     tckgen \
       -angle 22.5 \
       -maxlen 250 \
@@ -81,20 +83,24 @@ for dir in ${dwi}/sub-*; do
       ${dir}/${ses}/fba/tractogram/${sub}.tck \
       -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
       -force
-
+      
+    # Calculate track weights
     tcksift2 \
       ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
       ${dir}/${ses}/fba/fod/${sub}_wmfod.mif \
       ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt \
       -act ${dir}/${ses}/fba/tractogram/${sub}_5tt.mif \
       -remove_untracked
-
-    tck2connectome \
-      ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
-      parc_image.mif \
-      ${dir}/${ses}/fba/tractogram/${sub}_Schaefer2018_400Parcels_7Networks.csv \
-      -symmetric \
-      -tck_weights_in ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt
+    
+    # Create connectomes jusing SIFT weights
+    for rois in 400 600 800; do
+      tck2connectome \
+        ${dir}/${ses}/fba/tractogram/${sub}_SIFT.tck \
+        ${dir}/${ses}/fba/tractogram/Schaefer2018_${rois}Parcels_7Networks_order_conv.mif \
+        ${dir}/${ses}/fba/tractogram/Schaefer2018_${rois}Parcels_7Networks_order_connectome.csv \
+        -symmetric \
+        -tck_weights_in ${dir}/${ses}/fba/tractogram/${sub}_tck-weights.txt
+    done
     # Remove original tractogram
     #rm ${dir}/fba/tractograms/${sub}.tck
   done
