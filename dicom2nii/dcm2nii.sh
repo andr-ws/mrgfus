@@ -7,9 +7,9 @@ for dir in ${source}/sub-*; do
   mkdir ${source}/${sub}/convert
 
   /Applications/MRIcroGL.app/Contents/Resources/dcm2niix \
-    -o ${source}/${sub}/convert/ \
+    -o ${raw}/${sub}/ \
     -z y \
     -f ${sub}_%t_%d \
-    ${dir}
+    ${source}/DICOM
 
 done
