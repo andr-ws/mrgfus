@@ -1,4 +1,4 @@
-source=/Volumes/LA_4TB/mrgfus/sourcedata
+source=/Volumes/LA_4TB/mrgfus/sourcedata/NEW
 raw=/Volumes/LA_4TB/mrgfus/rawdata
 
 for dir in ${source}/sub-*; do
