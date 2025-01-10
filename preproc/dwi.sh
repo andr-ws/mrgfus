@@ -101,5 +101,11 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
 			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi.bval" | \
 		
 		mrmath - mean "${dwi}/${sub}/${ses}/${sub}_${ses}_b0-preproc.nii.gz" -axis 3
+
+  		# Setup synb0 directories
+    		mkdir ${dwi}/${sub}/${ses}/synb0
+    		cp ${der}/anat/${sub}/${ses}/${sub}_${ses}_acq-T1w_brain.nii.gz ${dwi}/${sub}/${ses}/synb0/T1.nii.gz
+      		cp ${dwi}/${sub}/${ses}/acqparams.txt ${dwi}/${sub}/${ses}/synb0/
+		cp ${dwi}/${sub}/${ses}/${sub}_${ses}_b0-preproc.nii.gz ${dwi}/${sub}/${ses}/synb0/b0.nii.gz
 	done
 done
