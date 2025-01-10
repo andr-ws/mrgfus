@@ -92,7 +92,7 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
 			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-preproc.nii.gz"
 	
 		# Clean up directory of temporary files
-		rm -r "${dwi}/${sub}/${ses}/${sub}_*tmp.*"
+		rm -r ${dwi}/${sub}/${ses}/*tmp*
 
 		# Create a b0 image
 		dwiextract \
