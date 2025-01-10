@@ -87,12 +87,12 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
 	
 		# Square root the subtracted image (eddy input)
 		fslmaths \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-riciansqr_tmp.nii.gz" \
+			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-rician_tmp.nii.gz" \
 			-sqrt \
 			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-preproc.nii.gz"
 	
 		# Clean up directory of temporary files
-		rm -r "${dwi}/${sub}/${ses}/${sub}_*tmp*"
+		rm -r "${dwi}/${sub}/${ses}/${sub}_*tmp.*"
 
 		# Create a b0 image
 		dwiextract \
