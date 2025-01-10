@@ -27,8 +27,8 @@ subject_path=${subjects[$SLURM_ARRAY_TASK_ID - 1]}
 sub=$(basename "${subject_path}")
 
 # run recon-all
-for ses in ses ses-preop ses1-postop ses2-postop; do
-  recon-all -s ${sub}_${ses} -i ${SUBJECTS_DIR}/${sub}/T1w-${ses}.nii \
+for ses in ses ses-01 ses-02 ses-03; do
+  recon-all -s ${sub}_${ses} -i ${SUBJECTS_DIR}/${sub}/T1w_${ses}.nii \
   -all \
   -qcache \
   -openmp 5 # Match to the number of concurrent jobs
