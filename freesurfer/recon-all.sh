@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32GB
 #SBATCH --time=48:00:00
-#SBATCH --array=1-10%5      # 5 is concurrent jobs to process with 10 being the total array size
+#SBATCH --array=1-16%5      # 5 is concurrent jobs to process with 10 being the total array size
 #SBATCH --mail-type=END
 #SBATCH --mail-user=luke.andrews@liverpool.ac.uk
 
