@@ -28,7 +28,7 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
 
 		# Create acquisition paramaters file for edc
 		dwi_json="${raw}/${sub}/${ses}/dwi/${sub}_${ses}_acq-dwi.json"
-		if grep -q "j-" "${dwijson}"; then 
+		if grep -q "j-" "${dwi_json}"; then 
 			ped=-1
 		else 
 			ped=1
