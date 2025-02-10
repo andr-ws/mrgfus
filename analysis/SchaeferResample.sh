@@ -9,12 +9,14 @@ ln -s /Applications/freesurfer/dev/subjects/fsaverage /Users/neuero-239/imaging/
 
 for dir in ${SUBJECTS_DIR}/sub-*; do
   sub=$(basename ${dir})
-  for h in lh rh; do
-    mri_surf2surf \
-    --hemi ${h} \
-    --srcsubject fsaverage \
-    --trgsubject ${dir} \
-    --sval-annot ${SUBJECTS_DIR}/fsaverage/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot \
-    --tval ${dir}/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
+  for ses in ses-01 ses-02 ses-03; do
+    for h in lh rh; do
+      mri_surf2surf \
+      --hemi ${h} \
+      --srcsubject fsaverage \
+      --trgsubject ${sub}/${ses} \
+      --sval-annot ${SUBJECTS_DIR}/fsaverage/label/${h}.Schaefer2018_400Parcels_7Networks_order.annot \
+      --tval ${dir}/${ses}/label/${h}.Schaefer2018_400Parcels_7Networks_order.annot
+    done
   done
 done
