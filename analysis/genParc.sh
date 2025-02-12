@@ -8,56 +8,43 @@ export SUBJECTS_DIR=${der}/data/freesurfer
 
 for dir in ${der}/data/freesurfer/sub-*; do
   sub=$(basename ${dir})
-  parc=${dir}/parcellations
+  for ses in ses-01 ses-02 ses-03
+    parc=${dir}/${ses}/parcellations
   
-  mkdir ${parc}
+    mkdir ${parc}
 
-  # Resample the Schaefer parcellations to subject surface - generate annot files for multiple resolutions
-  # UPDATE: resample parcellations to synthetic b0 surface
-  for rois in 400; do
-    for h in lh rh; do
-        mri_surf2surf \
-        --hemi ${h} \
-        --srcsubject fsaverage \
-        --trgsubject ${dwi}/freesurfer \
-        --sval-annot ${SUBJECTS_DIR}/fsaverage/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot \
-        --tval ${dwi}/freesurfer/label/${h}.Schaefer2018_${rois}Parcels_7Networks_order.annot
-    done
-          
+    # Resample the Schaefer parcellations to subject surface - generate annot files for multiple resolutions (done in SchaeferResample.sh)      
     # Convert annots to volume
-    mri_aparc2aseg --s ${dwi}/freesurfer --o ${dwi}/parcellations/${sub}_Schaefer2018_${rois}Parcels_7Networks.nii.gz --annot Schaefer2018_${rois}Parcels_7Networks_order
+    mri_aparc2aseg --s ${dir}/${ses} --o ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz --annot Schaefer2018_400Parcels_7Networks_order
 
     # Reorient the parcellations
-    fslreorient2std ${dwi}/parcellations/${sub}_Schaefer2018_${rois}Parcels_7Networks.nii.gz ${dwi}/parcellations/${sub}_Schaefer2018_${rois}Parcels_7Networks.nii.gz
+    fslreorient2std ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz
 
     # bval and bvec files
-    bval=${dwi}/${sub}_dwi.bval
-    bvec=${dwi}/eddy/${sub}_dwi_edc.eddy_rotated_bvecs
-
-    # Regrid dwi to 1.25 iso
-    mrgrid ${dwi}/eddy/${sub}_dwi_edc.nii.gz regrid -vox 1.25 ${dwi}/parcellations/tmp_data.nii.gz -force
+    bval=${der}/data/dwi/${sub}/${ses}/${sub}_${ses}_acq-dwi.bval
+    bvec=${der}/data/dwi/${sub}/${ses}/eddy/${sub}_dwi_edc.eddy_rotated_bvecs
       
     # Extract an upsampled b0
-    dwiextract ${dwi}/parcellations/tmp_data.nii.gz - -bzero -fslgrad ${bvec} ${bval} | mrmath - mean ${dwi}/parcellations/tmp_b0_us.nii.gz -axis 3 -force
+    dwiextract ${der}/projects/fba/data/${sub}/${ses}/fod/${sub}_dwi_us.mif - -bzero -fslgrad ${bvec} ${bval} | mrmath - mean ${parc}/tmp_${sub}_b0_us.nii.gz -axis 3 -force
      
     # Brain extract and mask the upsampled b0
-    bet2 ${dwi}/parcellations/tmp_b0_us.nii.gz ${dwi}/parcellations/b0_us_brain -m
-    
-    rm ${dwi}/parcellations/tmp*
+    bet2 ${parc}/tmp_${sub}_b0_us.nii.gz ${parc}/${sub}_b0_us_brain -m
     
     # Compute (rigid) us_b0 to synthetic space xfm
-    mri_convert ${dwi}/freesurfer/mri/synthSR.norm.mgz ${dwi}/parcellations/sb0_freesurfer.nii.gz
-    fslreorient2std ${dwi}/parcellations/sb0_freesurfer.nii.gz ${dwi}/parcellations/sb0_freesurfer.nii.gz
+    mri_convert ${dir}/${ses}/mri/brain.norm.mgz ${parc}/tmp_${sub}_fs_brain.nii.gz
+    fslreorient2std ${parc}/tmp_${sub}_fs_brain.nii.gz ${parc}/${sub}_fs_brain.nii.gz
+
+    rm ${parc}/tmp*
 
     antsRegistrationSyN.sh -d 3 -t r -n 16 \
-    -f ${dwi}/parcellations/sb0_freesurfer.nii.gz \
-    -m ${dwi}/parcellations/b0_us_brain.nii.gz \
-    -o ${dwi}/parcellations/b0_to_sb0_
+    -f ${parc}/${sub}_fs_brain.nii.gz \
+    -m ${parc}/${sub}_b0_us_brain.nii.gz \
+    -o ${parc}/${sub}_b0_to_fs_
 
     # Transform parcellations to dwi space
     antsApplyTransforms -d 3 \
-    -r ${dwi}/parcellations/b0_us_brain.nii.gz \
-    -i ${dwi}/parcellations/${sub}_Schaefer2018_${rois}Parcels_7Networks.nii.gz \
+    -r ${parc}/${sub}_b0_us_brain.nii.gz \
+    -i ${parc}/${sub}_Schaefer2018_${rois}Parcels_7Networks.nii.gz \
     -o ${dwi}/parcellations/${sub}_Schaefer2018_${rois}Parcels_7Networks_space-dwi.nii.gz \
     -t [${dwi}/parcellations/b0_to_sb0_0GenericAffine.mat,1] \
     -n GenericLabel[linear]
