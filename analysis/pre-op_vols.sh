@@ -11,6 +11,6 @@ for ses in ses-01 ses-02 ses-03; do
       mkdir -p ${der}/projects/FIRST/${sub}/${ses}
       
       run_first_all -d -b -i ${dir}/${ses}/${sub}_${ses}_acq-T1w_brain.nii.gz \
-      -o ${der}/projects/FIRST/${sub}/${ses}
+      -o ${der}/projects/FIRST/${sub}/${ses}/${sub}_${ses}_
   done
 done
