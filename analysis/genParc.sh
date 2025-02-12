@@ -15,7 +15,7 @@ for dir in ${der}/data/freesurfer/sub-*; do
 
     # Resample the Schaefer parcellations to subject surface - generate annot files for multiple resolutions (done in SchaeferResample.sh)      
     # Convert annots to volume
-    mri_aparc2aseg --s ${dir}/${ses} --o ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz --annot Schaefer2018_400Parcels_7Networks_order
+    mri_aparc2aseg --s ${sub}/${ses} --o ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz --annot Schaefer2018_400Parcels_7Networks_order
 
     # Reorient the parcellations
     fslreorient2std ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz ${parc}/${sub}_Schaefer2018_400Parcels_7Networks.nii.gz
