@@ -65,7 +65,7 @@ for dir in ${der}/data/freesurfer/sub-*; do
     ${parc}/tmp_${sub}_Schaefer2018_400Parcels_7Networks_space-dwi_ex3.nii.gz
     
     fslmaths ${parc}/${sub}_Schaefer2018_400Parcels_7Networks_space-dwi.nii.gz \
-    -sub ${parc}/tmp_${sub}_Schaefer2018_400Parcels_7Networks_space-dwi_ex3.nii.gz
+    -sub ${parc}/tmp_${sub}_Schaefer2018_400Parcels_7Networks_space-dwi_ex3.nii.gz \
     ${parc}/${sub}_Schaefer2018_400Parcels_7Networks_space-dwi.nii.gz
 
     # Clean up
