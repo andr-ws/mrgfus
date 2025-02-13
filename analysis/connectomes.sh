@@ -30,7 +30,7 @@ for dir in ${fba}/data/sub-*; do
     -force
 
     # SIFT and extract weights
-    tcksift2 ${fba_sdir}/ACT/${sub}.tck ${fba_sdir}/fod/${sub}_wmfod_norm.mif ${fba_sdir}/ACT/${sub}_weights.txt \
+    tcksift2 ${fba_sdir}/ACT/${sub}.tck ${fba_sdir}/fod/${sub}_wmfod.mif ${fba_sdir}/ACT/${sub}_weights.txt \
     -act ${fba_sdir}/ACT/${sub}_5tt.mif -fd_scale_gm -out_mu ${fba_sdir}/ACT/${sub}_pc_mu.txt -force
 
     # Reformat schaefer parcellation
