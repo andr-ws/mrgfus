@@ -272,8 +272,12 @@ for subject in ses01_matrices.keys():
 
 print("All subjects processed.")
 
-# Now we need a way of sorting out lesional focus, and thus extracting the gradient hemisphere maximally impacted by the lesion
-# I think if we have a column in the dataframe that specifies hemi as lh or rh, we can then extract the correct hemipshere to analyse.
+# We have a column in the dataframe called LESION_SIDE that specifies hemi as lh or rh.
+we can use this to extract the correct hemipshere to analyse based on the labels of the ROIs that begin with lh/rh.
+We can analyse the networks entriely also.
+
+# Here is an interesting thought.
+In order to capture the effects of targeting, we can use the immediate score to dictate accuracy? However, the flexibility of the brain to respond may mediate longer term effcets.
 
 
 
