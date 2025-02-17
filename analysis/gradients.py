@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 Script to perform gradient analysis comparing pre and post FUS.
+I think the idea here is to assess whether preoperative alterations (within the sample) may constrain surgery-induced changes.
+
 """
 
 import os
@@ -190,6 +192,17 @@ def distance_thresholding(A, dist, hemiid, nbins):
 ################################
 # 4. Perform distance-dependent thresholding for each group
 ################################
+
+# I have 3 sessions here. What is the best way to approach this?
+
+Option 1: perfrom leave-one-out alignment using baseline data.
+    Essentially, construct a baseline (pre-op) template from all but that subject, perform DDT.
+    Compute the individuals gradient (perhaps all gradients here) and then align them to the group with Procrustes - calculate the 
+    difference between aligned as change (can do this for each hemisphere). Could also compute spin permutations between the maps.
+    If anatomy constrains change, the degree of correlation should be higher in those with poorer response?
+
+
+
 
 # Compute the pairwise Euclidean distance between ROI centroids
 dist = squareform(pdist(roi_centers, metric='euclidean'))
