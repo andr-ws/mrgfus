@@ -33,29 +33,23 @@ labeling = load_parcellation('schaefer', scale=400, join=True)
 mask = labeling != 0
 lut_file = "/Users/a9ws/imaging/datasets/mrgfus/derivatives/study_files/parcellations/lut/Schaefer2018_400Parcels_7Networks_order.lut"
 
-# Read groupings information (this CSV contains subject_id, site, age, sex, group, etc.)
-data_path = "/Users/a9ws/imaging/datasets/pd/derivatives/study_files/gradients/groupings.csv"
+# Read subject data (includes subject_id, session, age, sex, clinical scores, etc.)
+data_path = "/Users/a9ws/imaging/datasets/mrgfus/derivatives/study_files/gradients/groupings.csv"
 data = pd.read_csv(data_path)
-# Ensure subject_id is string and set it as index for later lookup.
+
+# Ensure subject_id is a string
 data['subject_id'] = data['subject_id'].astype(str)
-data.set_index("subject_id", inplace=True)
 
-# Filter groups:
-# For example, group 1 = patients (60d) and group 3 = healthy controls.
-patients_ids = data.loc[data['group'] == 1].index.values  # Patients
-older_hc_ids = data.loc[data['group'] == 3].index.values    # Standard healthy controls
-young_hc_ids = data.loc[data['group'] == 4].index.values      # Young healthy controls
-
-
-
-# Implement sorting (need some way to be comparing the gradient for left and right FUS lesions)
-
+# Organize sessions (assuming a 'session' column exists with values like 'ses-01', 'ses-02', 'ses-03')
+ses01_ids = data[data['session'] == 'ses-01']['subject_id'].tolist()
+ses02_ids = data[data['session'] == 'ses-02']['subject_id'].tolist()
+ses03_ids = data[data['session'] == 'ses-03']['subject_id'].tolist()
 
 ################################
 # 1.5. Load ROI centroids for distance-dependent thresholding
 ################################
 
-centroids_file = "/Users/a9ws/imaging/datasets/pd/derivatives/study_files/parcellations/centroids/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv"
+centroids_file = "/Users/a9ws/imaging/datasets/mrgfus/derivatives/study_files/parcellations/centroids/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv"
 centroids_df = pd.read_csv(centroids_file, sep=",")
 roi_centers = centroids_df[['R', 'A', 'S']].to_numpy()  # shape: (400, 3)
 
@@ -65,39 +59,48 @@ roi_centers = centroids_df[['R', 'A', 'S']].to_numpy()  # shape: (400, 3)
 
 base_dir = "/Users/a9ws/imaging/datasets/mrgfus/derivatives/data/mind_networks"
 
-# Need to read in the sessions seperately...
-
-def load_connectivity_matrix(subj_id, filename="Schaefer_400_tck_gradmat.csv"):
+def load_connectivity_matrix(subj_id, session):
     """
-    Given a subject id, construct the expected file path and load the connectivity matrix.
+    Load subject-specific connectivity matrix for a given session.
     """
     if not subj_id.startswith("sub-"):
         subj_id = "sub-" + subj_id
-    file_path = os.path.join(base_dir, filename)
+    file_path = os.path.join(base_dir, f"{subj_id}_{session}_MIND.csv")
     if os.path.isfile(file_path):
         return np.loadtxt(file_path, delimiter=',')
     else:
-        print(f"Connectivity matrix not found for {subj_id} at {file_path}")
+        print(f"Connectivity matrix not found for {subj_id}, {session} at {file_path}")
         return None
 
-# Load connectivity matrices for each timepoint
-ses_01_matrices = {}
-for subj in patients_ids:
-    mat = load_connectivity_matrix(subj, filename="${sub}_ses-01_MIND.csv")
-    if mat is not None:
-        patients_matrices[subj] = mat
+# Load connectivity matrices for each session
+ses01_matrices = {subj: load_connectivity_matrix(subj, "ses-01") for subj in ses01_ids}
+ses02_matrices = {subj: load_connectivity_matrix(subj, "ses-02") for subj in ses02_ids}
+ses03_matrices = {subj: load_connectivity_matrix(subj, "ses-03") for subj in ses03_ids}
 
-ses_02_matrices = {}
-for subj in older_hc_ids:
-    mat = load_connectivity_matrix(subj, filename="${sub}_ses-02_MIND.csv")
-    if mat is not None:
-        older_hc_matrices[subj] = mat
+# Remove None entries (subjects with missing matrices)
+ses01_matrices = {k: v for k, v in ses01_matrices.items() if v is not None}
+ses02_matrices = {k: v for k, v in ses02_matrices.items() if v is not None}
+ses03_matrices = {k: v for k, v in ses03_matrices.items() if v is not None}
 
-ses_03_matrices = {}
-for subj in young_hc_ids:
-    mat = load_connectivity_matrix(subj, filename="${sub}_ses-03_MIND.csv")
-    if mat is not None:
-        young_hc_matrices[subj] = mat
+################################
+# 3. Organizing a DataFrame to Track Sessions and Scores
+################################
+
+# Define clinical metrics of interest
+clinical_vars = ["age", "sex", "group", "UPDRS", "pain_score"]
+
+# Create a long-format DataFrame for easier tracking
+session_data = []
+for session, matrices in zip(["ses-01", "ses-02", "ses-03"], 
+                             [ses01_matrices, ses02_matrices, ses03_matrices]):
+    for subj, matrix in matrices.items():
+        row = {"subject_id": subj, "session": session, "matrix": matrix}
+        for var in clinical_vars:
+            row[var] = data.loc[data['subject_id'] == subj, var].values[0]
+        session_data.append(row)
+
+# Convert to DataFrame
+df_sessions = pd.DataFrame(session_data)
 
 ################################
 # 3. Define the distance-dependent thresholding function
@@ -202,6 +205,94 @@ Option 1: perfrom leave-one-out alignment using baseline data.
     If anatomy constrains change, the degree of correlation should be higher in those with poorer response?
 
 
+If preoperative anatomy constrains improvement, you might expect:
+
+Less deviation from baseline (i.e., stable gradients) in poor responders.
+Larger gradient shifts in patients with greater flexibility in brain organization.
+
+
+
+
+
+
+
+# Computes reference gradients for each patient using leave-one-out construction
+# Aligns each patients gradients to their reference gradient using procrustes alignment
+
+from brainspace.gradient import GradientMaps
+from brainspace.gradient.alignment import procrustes_alignment
+import numpy as np
+
+def compute_group_reference_gradient(exclude_subject, ses01_matrices):
+    """
+    Computes the reference gradient using all ses01 subjects except `exclude_subject`.
+    """
+    matrices = [mat for subj, mat in ses01_matrices.items() if subj != exclude_subject]
+    
+    if len(matrices) == 0:
+        raise ValueError(f"No other subjects available to compute reference for {exclude_subject}")
+    
+    group_avg = np.mean(matrices, axis=0)  # Compute group average connectivity matrix
+    gm = GradientMaps(n_components=10, approach='dm', kernel='normalized_angle')  # Example parameters
+    gm.fit(group_avg)  # Fit gradients to group reference
+    return gm.gradients_
+
+def align_patient_gradients(patient_id, ses01_matrices, ses02_matrices, ses03_matrices, reference_gradient):
+    """
+    Computes patient-specific gradients for ses01, ses02, ses03 and aligns them to the reference gradient.
+    """
+    gm = GradientMaps(n_components=10, approach='dm', kernel='normalized_angle')
+    
+    matrices = {
+        "ses01": ses01_matrices.get(patient_id),
+        "ses02": ses02_matrices.get(patient_id),
+        "ses03": ses03_matrices.get(patient_id)
+    }
+    
+    aligned_gradients = {}
+    for session, matrix in matrices.items():
+        if matrix is not None:
+            gm.fit(matrix)  # Compute patient-specific gradients
+            aligned = procrustes_alignment(gm.gradients_, reference_gradient)  # Align to reference
+            aligned_gradients[session] = aligned
+
+    return aligned_gradients
+
+# Compute and align for every subject
+aligned_gradients_per_subject = {}
+
+for subject in ses01_matrices.keys():
+    print(f"Processing subject: {subject}")
+    
+    # Compute subject-specific reference gradient
+    reference_gradient = compute_group_reference_gradient(subject, ses01_matrices)
+    
+    # Align subject's gradients to their reference
+    aligned_gradients_per_subject[subject] = align_patient_gradients(subject, ses01_matrices, ses02_matrices, ses03_matrices, reference_gradient)
+
+print("All subjects processed.")
+
+# Now we need a way of sorting out lesional focus, and thus extracting the gradient hemisphere maximally impacted by the lesion
+# I think if we have a column in the dataframe that specifies hemi as lh or rh, we can then extract the correct hemipshere to analyse.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Implement sorting (need some way to be comparing the gradient for left and right FUS lesions)
 
 
 # Compute the pairwise Euclidean distance between ROI centroids
