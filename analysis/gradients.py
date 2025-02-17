@@ -5,6 +5,8 @@ I think the idea here is to assess whether preoperative alterations (within the 
 
 """
 
+# Do not have to perform DDT as this is a problem specific to the biases in short-long range connections of probabilistic tractography.
+
 import os
 import glob
 import numpy as np
