@@ -110,3 +110,18 @@ for dir in ${fba}/data/sub-*; do
   done
 done
 
+# Create population template from subset of ses-01
+template=${base}/derivatives/projects/study_files/sub_template.txt
+mkdir ${fba}/template ${fba}/template/fods ${fba}/template/masks
+
+while read -r sub; do
+  ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_wmfod.mif ${fba}/template/fods/
+  ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
+done < $template
+
+population_template \
+${fba}/template/fods/ \
+-mask ${fba}/template/masks/ \
+${fba}/template/wmfod_template.mif \
+-voxel_size 1.25 \
+-initial_alignment geometric
