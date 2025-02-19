@@ -125,3 +125,95 @@ ${fba}/template/fods/ \
 ${fba}/template/wmfod_template.mif \
 -voxel_size 1.25 \
 -initial_alignment geometric
+
+# Register wmFODs to template
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+  
+  for ses in ses-01 ses-02 ses-03; do
+    mkdir -p ${dir}/${ses}/fixels
+  
+    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+    ${fba}/template/wmfod_template.mif \
+    -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    ${dir}/${ses}/fod/template-${sub}_warp.mif
+
+    # Transform to template
+    mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    -interp nearest -datatype bit \
+    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
+  done
+done
+
+mrmath ${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
+min \
+${fba}/template/template_mask.mif -datatype bit
+
+# Define group white matter fixel mask and estimate fixel metrics for each patient
+fod2fixel \
+-mask ${fba}/template/template_mask.mif \
+-fmls_peak_value 0.1 \                         #<- correct value?
+${fba}/template/wmfod_template.mif \
+${fba}/template/fixel_mask
+
+# Segment FOD images to estimate fixels and their AFD
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+  for ses in ses-01 ses-02 ses-03; do
+  
+    fod2fixel \
+    -mask ${fba}/template/template_mask.mif \
+    ${dir}/${ses}/fod/${sub}_fod-template_NOT_REORIENTED.mif \
+    ${dir}/${ses}/fixels/${sub}_fixel-template_NOT_REORIENTED \
+    -afd ${ses}_fd.mif \            #<- not sure where this goes?
+    -force
+   
+    # Reorient fixels
+    fixelreorient \
+    ${dir}/${ses}/fixels/${sub}_fixel-template_NOT_REORIENTED \
+    ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    ${dir}/${ses}/fixels/${sub}_fixel-template \
+    -force
+
+    # Assign subjects fixels to template fixels
+    fixelcorrespondence \
+    ${dir}/${ses}/fixels/${sub}_fixel-template/fd.mif \
+    ${fba}/template/fixel_mask \
+    ${fba}/template/fd \
+    ${sub}_${ses}.mif \
+    -force
+
+    # Compute FC metric
+    warp2metric \
+    ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    -fc ${fba}/template/fixel_mask \
+    ${fba}/template/fc \
+    ${sub}_${ses}.mif \
+    -force
+  done
+done
+
+# Copy files for, and compute log-fc
+cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/log_fc
+for dir in ${fba}/data/sub-*; do
+   sub=$(basename ${dir})
+   for ses in ses-01 ses-02 ses-03; do
+     mrcalc \
+     ${fba}/template/fc/${sub}_${ses}.mif \
+     -log ${fba}/template/log_fc/${sub}_${ses}.mif \
+     -force
+   done
+done
+
+# Copy files for, and compute fdc
+cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/fdc
+for dir in ${fba}/data/sub-*; do
+   sub=$(basename ${dir})
+   for ses in ses-01 ses-02 ses-03; do
+     mrcalc \
+     ${fba}/template/fd/${sub}_${ses}.mif ${fba}/template/fc/${sub}_${ses}.mif -mult \
+     ${fba}/template/fdc/${sub}_${ses}.mif \
+     -force
+   done
+done
