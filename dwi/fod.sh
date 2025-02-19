@@ -131,7 +131,6 @@ for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
   
   for ses in ses-01 ses-02 ses-03; do
-    mkdir -p ${dir}/${ses}/fixels
   
     mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
     ${fba}/template/wmfod_template.mif \
@@ -161,7 +160,9 @@ ${fba}/template/fixel_mask
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
   for ses in ses-01 ses-02 ses-03; do
-  
+
+    mkdir -p ${dir}/${ses}/fixels
+    
     fod2fixel \
     -mask ${fba}/template/template_mask.mif \
     ${dir}/${ses}/fod/${sub}_fod-template_NOT_REORIENTED.mif \
