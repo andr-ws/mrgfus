@@ -163,12 +163,17 @@ for dir in ${fba}/data/sub-*; do
   for ses in ses-01 ses-02 ses-03; do
 
     mkdir -p ${dir}/${ses}/fixels
+
+    mrtransform ${dir}/${ses}/fod/${sub}_wmfod.mif \
+    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    --reorient_fod no \
+    ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif
     
     fod2fixel \
     -mask ${fba}/template/template_mask.mif \
-    ${dir}/${ses}/fod/${sub}_fod-template_NOT_REORIENTED.mif \
-    ${dir}/${ses}/fixels/${sub}_fixel-template_NOT_REORIENTED \
-    -afd ${ses}_fd.mif \            #<- not sure where this goes?
+    ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif \
+    ${dir}/${ses}/fixels/${sub}_fixel-template_noreo \
+    -afd ${ses}_fd.mif \
     -force
    
     # Reorient fixels
