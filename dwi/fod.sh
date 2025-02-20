@@ -150,9 +150,10 @@ min \
 ${fba}/template/template_mask.mif -datatype bit
 
 # Define group white matter fixel mask and estimate fixel metrics for each patient
+# 0.08 looks the most balanced from testing (0.06 > 0.1)
 fod2fixel \
 -mask ${fba}/template/template_mask.mif \
--fmls_peak_value 0.1 \                         #<- correct value?
+-fmls_peak_value 0.08 \
 ${fba}/template/wmfod_template.mif \
 ${fba}/template/fixel_mask
 
