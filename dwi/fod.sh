@@ -178,7 +178,7 @@ for dir in ${fba}/data/sub-*; do
    
     # Reorient fixels
     fixelreorient \
-    ${dir}/${ses}/fixels/${sub}_fixel-template_NOT_REORIENTED \
+    ${dir}/${ses}/fixels/${sub}_fixel-template_noreo \
     ${dir}/${ses}/fod/${sub}-template_warp.mif \
     ${dir}/${ses}/fixels/${sub}_fixel-template \
     -force
@@ -202,6 +202,7 @@ for dir in ${fba}/data/sub-*; do
 done
 
 # Copy files for, and compute log-fc
+mkdir ${fba}/template/log_fc
 cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/log_fc
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
@@ -214,6 +215,7 @@ for dir in ${fba}/data/sub-*; do
 done
 
 # Copy files for, and compute fdc
+mkdir ${fba}/template/fdc
 cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/fdc
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
