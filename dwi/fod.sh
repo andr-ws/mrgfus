@@ -226,3 +226,45 @@ for dir in ${fba}/data/sub-*; do
      -force
    done
 done
+
+# To integrate: percent change images for postop. timepoints
+
+#!/bin/bash
+
+fdcdir=/Volumes/LA_4TB/mrgfus/derivatives/fba/template/fdc_smooth
+
+# Create output directories
+mkdir -p ${fdcdir}/pc/6m ${fdcdir}/pc/12m
+
+# Loop through all ses-01 (baseline) files
+for pre in ${fdcdir}/sub-*_ses-01.mif; do
+  # Extract subject ID (e.g., sub-001)
+  sub=$(basename $pre | cut -d '_' -f 1)
+
+  # Define paths to sessions
+  fdc_6m=${fdcdir}/${sub}_ses-02.mif
+  fdc_12m=${fdcdir}/${sub}_ses-03.mif
+
+  # Output filenames
+  pc_6m=${fdcdir}/pc/6m/${sub}.mif
+  pc_12m=${fdcdir}/pc/12m/${sub}.mif
+
+  # Compute 6-month percent change if ses-02 exists
+  if [ -f $fdc_6m ]; then
+    echo "Computing 6m percent change for ${sub}"
+    mrcalc $pre $fdc_6m -subtract $pre -divide 100 -mult $pc_6m
+  else
+    echo "Skipping 6m for ${sub} (missing ses-02)"
+  fi
+
+  # Compute 12-month percent change if ses-03 exists
+  if [ -f $fdc_12m ]; then
+    echo "Computing 12m percent change for ${sub}"
+    mrcalc $pre $fdc_12m -subtract $pre -divide 100 -mult $pc_12m
+  else
+    echo "Skipping 12m for ${sub} (missing ses-03)"
+  fi
+
+done
+
+
