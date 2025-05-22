@@ -227,6 +227,12 @@ for dir in ${fba}/data/sub-*; do
    done
 done
 
+# Compute fixel-fixel connectivity matrix
+fixelconnectivity \
+fixel_mask/ \
+${fba}/template/tractogram_2mil_SIFT.tck matrix/ \
+-force
+
 # Smooth metric data using the fixel-fixel connectivity matrix
 for metric in fd log_fc fdc; do
   fixelfilter \
