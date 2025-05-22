@@ -227,6 +227,14 @@ for dir in ${fba}/data/sub-*; do
    done
 done
 
+# Smooth metric data using the fixel-fixel connectivity matrix
+for metric in fd log_fc fdc; do
+  fixelfilter \
+  ${fba}/template/${metric} \
+  smooth ${fba}/template/${metric}_smooth \
+  -matrix ${fba}/template/matrix/
+done
+
 # To integrate: percent change images for postop. timepoints
 
 #!/bin/bash
