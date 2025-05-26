@@ -332,7 +332,23 @@ for dir in ${fba}/data/sub-*; do
 done
 
 # Hypointensity modelling
+for dir in ${fba}/data/sub-*; do
+sub=$(basename ${dir})
 
-fslmaths /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-01/fod/sub-001_fdc_lh_hypo.nii.gz -sub /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-03/fod/sub-001_fdc_lh_hypo.nii.gz -div /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-01/fod/sub-001_fdc_lh_hypo.nii.gz -mul 100 /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-03/diff2.nii.gz
+for hemi in lh rh; do
+
+# 6-months
+fslmaths \
+${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+-sub ${fba}/data/${sub}/ses-02/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+-div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+-mul 100 ${fba}/data/sub-001/ses-03/diff2.nii.gz
+
+# 12-months
+
+
+
+
+# Calculate brain atrophy using a regression-residuals method (TBV~ICV)
 
 
