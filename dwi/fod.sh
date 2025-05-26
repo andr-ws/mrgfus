@@ -230,7 +230,7 @@ done
 # Compute fixel-fixel connectivity matrix
 fixelconnectivity \
 fixel_mask/ \
-${fba}/template/tractogram_2mil_SIFT.tck matrix/ \
+${fba}/template/tractogram_4mil_SIFT.tck matrix/ \
 -force
 
 # Smooth metric data using the fixel-fixel connectivity matrix
@@ -279,6 +279,56 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
     echo "Skipping 12m for ${sub} (missing ses-03)"
   fi
 
+done
+
+# CREATE A .CSV FILE TO STORE THE MEAN VALUE PER SESSION
+# IF SUBJECT DOESN'T HAVE THE SESSION, ENTRY = NA
+
+# I want these to have rows as subject ID's and 3 columns for sessions (ses-01, ses-02, ses-03)
+echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/lh_hypo.csv
+echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/rh_hypo.csv
+
+# Loop through each subject
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+  echo "Processing $sub"
+
+  lh_line="$sub"
+  rh_line="$sub"
+
+  # Loop through sessions
+  for ses in ses-01 ses-02 ses-03; do
+    fdc_mif="${fba}/template/fdc_smooth/${sub}_${ses}.mif"
+    fdc_nii="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_map.nii.gz"
+
+    # Check if input file exists
+    if [[ -f "$fdc_mif" ]]; then
+      fixel2voxel "$fdc_mif" mean "$fdc_nii"
+
+      for hemi in lh rh; do
+        hypo_mask="${fba}/template/masks/${hemi}_hypo.nii.gz"
+        fdc_masked="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_${hemi}_hypo.nii.gz"
+
+        fslmaths "$fdc_nii" -mul "$hypo_mask" "$fdc_masked"
+        value=$(fslstats "$out_masked" -M)
+
+        # Append value to the correct hemisphere line
+        if [ "$hemi" == "lh" ]; then
+          lh_line="$lh_line,$value"
+        else
+          rh_line="$rh_line,$value"
+        fi
+      done
+    else
+      # If file doesn't exist, append NA
+      lh_line="$lh_line,NA"
+      rh_line="$rh_line,NA"
+    fi
+  done
+
+  # Append full row to CSV
+  echo "$lh_line" >> ${fba}/analysis/lh_hypo.csv
+  echo "$rh_line" >> ${fba}/analysis/rh_hypo.csv
 done
 
 
