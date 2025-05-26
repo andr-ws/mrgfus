@@ -331,4 +331,8 @@ for dir in ${fba}/data/sub-*; do
   echo "$rh_line" >> ${fba}/analysis/rh_hypo.csv
 done
 
+# Hypointensity modelling
+
+fslmaths /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-01/fod/sub-001_fdc_lh_hypo.nii.gz -sub /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-03/fod/sub-001_fdc_lh_hypo.nii.gz -div /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-01/fod/sub-001_fdc_lh_hypo.nii.gz -mul 100 /Volumes/LA_4TB/datasets/mrgfus/derivatives/fba/data/sub-001/ses-03/diff2.nii.gz
+
 
