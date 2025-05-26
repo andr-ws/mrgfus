@@ -331,20 +331,34 @@ for dir in ${fba}/data/sub-*; do
   echo "$rh_line" >> ${fba}/analysis/rh_hypo.csv
 done
 
-# Hypointensity modelling
+# Hypointensity permutation modelling
 for dir in ${fba}/data/sub-*; do
-sub=$(basename ${dir})
+  sub=$(basename ${dir})
 
-for hemi in lh rh; do
+  for hemi in lh rh; do
 
-# 6-months
-fslmaths \
-${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
--sub ${fba}/data/${sub}/ses-02/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
--div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
--mul 100 ${fba}/data/sub-001/ses-03/diff2.nii.gz
+  # 6-months
+  fslmaths \
+    ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -sub ${fba}/data/${sub}/ses-02/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -mul 100 ${fba}/data/${sub}/ses-02/${sub}_hypo_pc.nii.gz
 
-# 12-months
+  # 12-months
+  fslmaths \
+    ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -sub ${fba}/data/${sub}/ses-03/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
+    -mul 100 ${fba}/data/${sub}/ses-03/${sub}_hypo_pc.nii.gz
+
+  done
+done
+
+fslrandomise...
+
+
+
+
 
 
 
