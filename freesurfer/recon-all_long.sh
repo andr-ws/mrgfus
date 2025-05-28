@@ -36,11 +36,20 @@ for dir in ${SUBJECTS_DIR}/sub-*; do
     echo "No valid sessions found for $sub"
   fi
 
-  # Optional: run -long on each session
+  # run -long on each session
   for ses in ses-01 ses-02 ses-03; do
     if [ -d "${dir}/${ses}" ]; then
       echo "Running longitudinal for ${sub}_${ses} against $base"
       recon-all -long ${sub}_${ses} $base -all
     fi
   done
+
+  # Clean up directories
+  run=long.${sub}_base
+  mkdir ${dir}/long
+  mv ${SUBJECTS_DIR}/${base} ${dir}/long/
+  for ses in ses-01 ses-02 ses-03; do
+    mv ${SUBJECTS_DIR}/${sub}.${run} ${dir}/long/
+  done
+  
 done
