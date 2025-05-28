@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-aparcstats2table --hemi lh --subjects 004 008 --parc 500.aparc.annot --meas meancurv --tablefile lh.a2005s.meancurv.txt
+mris_anatomical_stats -a /Volumes/LA_4TB/datasets/mrgfus/derivatives/freesurfer/sub-001/ses-01/label/lh.500.aparc.annot  -b sub-001/ses-01 lh
 
 """
 compute_msn.py
