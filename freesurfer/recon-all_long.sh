@@ -49,7 +49,9 @@ for dir in ${SUBJECTS_DIR}/sub-*; do
   mkdir ${dir}/long
   mv ${SUBJECTS_DIR}/${base} ${dir}/long/
   for ses in ses-01 ses-02 ses-03; do
-    mv ${SUBJECTS_DIR}/${sub}.${run} ${dir}/long/
+    if [ -d "${dir}/${ses}" ]; then
+      mv ${SUBJECTS_DIR}/${sub}.${run} ${dir}/long/
+    fi
   done
   
 done
