@@ -242,10 +242,7 @@ for metric in fd log_fc fdc; do
 done
 
 # To integrate: percent change images for postop. timepoints
-
-#!/bin/bash
-
-fdcdir=/Volumes/LA_4TB/mrgfus/derivatives/fba/template/fdc_smooth
+fdcdir=/Volumes/LA_4TB/datasetsmrgfus/derivatives/fba/template/fdc_smooth
 
 # Create output directories
 mkdir -p ${fdcdir}/pc/6m ${fdcdir}/pc/12m
