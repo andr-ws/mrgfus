@@ -110,6 +110,62 @@ for dir in ${fba}/data/sub-*; do
   done
 done
 
+# Possible new interjection here: we create longitudinal template(s)
+
+# Obtain subjects who have both 6m and 12m DWI so can use the same file for each
+
+
+for dir in ${fba}/data/s*; do
+  sub=$(basename ${dir})
+  
+  for timepoint in t6 t12; do
+    # Determine which session corresponds to this timepoint
+    if [ "$timepoint" = "t6" ]; then
+      ses="ses-02"
+    else
+      ses="ses-03"
+    fi
+
+    # Construct the path to the subject's data for that session
+    subj_ses_dir="${fba}/data/${sub}/${ses}"
+
+    # Only proceed if that session directory actually exists
+    if [ -d "$subj_ses_dir" ]; then
+      # Create the "midway" output directory under template/<timepoint>
+      mkdir -p "${fba}/template/${timepoint}/midway"
+
+      # 1) Run mrregister to align sess-01 ↔ current session
+      mrregister \
+      -type rigid_nonlinear \
+      "${fba}/data/${sub}/ses-01/fod/${sub}_wmfod.mif" \
+      "${subj_ses_dir}/fod/${sub}_wmfod.mif" \
+      -transformed_midway "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
+                         "${fba}/template/${timepoint}/midway/${sub}_${ses}.mif" \
+      -nl_warp_full "${fba}/template/${timepoint}/midway/${sub}_intra-warp.mif
+
+      # 2) Average the two midway‐transformed images into a single “midway” image
+      mrmath \
+      "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
+      "${fba}/template/${timepoint}/midway/${sub}_${ses}.mif" \
+      mean \
+      "${fba}/template/${timepoint}/midway/${sub}_midway.mif"
+
+      # 3) Remove the two intermediate “_ses-01” and “_${ses}” files, leaving only the final average
+      rm "${fba}/template/${timepoint}/midway/${sub}_s"*.mif
+    else
+      # If the directory doesn't exist, just skip to the next timepoint
+      continue
+    fi
+  done
+done
+
+
+${fba}/template/subjects.txt # contains the subjects for template construction, can be used for both also
+
+# Use this file ^ to extract the midway images from above to create a template from
+
+
+
 # Create population template from subset of ses-01
 template=${base}/derivatives/projects/study_files/sub_template.txt
 mkdir ${fba}/template ${fba}/template/fods ${fba}/template/masks
