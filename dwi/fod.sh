@@ -110,9 +110,19 @@ for dir in ${fba}/data/sub-*; do
   done
 done
 
-# Possible new interjection here: we create longitudinal template(s)
+# Longitudinal FBA (oh god)!
 
-# Obtain subjects who have both 6m and 12m DWI so can use the same file for each
+# Trialling a rigid population_template per individual to generate a subject average image
+# But this needs to provide a transform ->>
+
+# Create a population_template from these average images from the subjects to construct the template from
+
+# Then for each intra-subject averaged image, compute warp between the averaged image to the template
+# Then compose the transform used to register each native to the average, with the average to the template
+
+
+
+
 
 
 for dir in ${fba}/data/s*; do
