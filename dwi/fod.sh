@@ -136,7 +136,7 @@ for dir in ${fba}/data/s*; do
 
       # 1) Run mrregister to align sess-01 ↔ current session
       mrregister \
-      -type rigid_nonlinear \
+      -type rigid \
       "${fba}/data/${sub}/ses-01/fod/${sub}_wmfod.mif" \
       "${subj_ses_dir}/fod/${sub}_wmfod.mif" \
       -transformed_midway "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
