@@ -122,6 +122,15 @@ done
 
 template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
 
+
+# The other possible option is to for all subjects create a rigid intra-pop template and write out affine xfm
+# Then, you would non-linearly warp the rigid intra-pop to the group to generate a nl-warp
+# Then you would compose the linear and warp when transforming the natives to the group template
+
+
+
+
+
 # Store intra-subject templates
 while read -r sub; do
   mkdir -p ${fba}/template/intra-temps/${sub}
@@ -136,7 +145,8 @@ while read -r sub; do
     ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif \
     ${fba}/template/intra-temps/${sub}_avg.mif
     -voxel_size 1.25 \
-    -type rigid
+    -type rigid \
+    -linear_transformations_dir
 
   rm -r ${fba}/template/intra-temps/${sub}/
 done < $template
@@ -148,7 +158,8 @@ population_template \
   ${fba}/template/wmfod_template.mif \
   -voxel_size 1.25
 
-# Now non-linearly register and transform all native timepoints
+# Now register and transform all native timepoints
+# Use the affine to intra-pop and the warp of intra-pop to group
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
