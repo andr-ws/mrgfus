@@ -162,87 +162,49 @@ done < $template
 population_template \
   ${fba}/template/study_template/fods/ \
   ${fba}/template/study_template/wmfod_template.mif \
-  -voxel_size 1.25 \
-  -warp_dir ${fba}/template/study_template/xfms # -warp_dir provides warps for those in the template
+  -voxel_size 1.25
+  
+# Population_template by default is: rigid_affine_nonlinear
+# Want to use this on all subjects for consistency
 
-# Need to generate non-linear warps for those not inlcuded in the template
-
-# I was thinking could do this:
+mkdir ${fba}/template/study_template/xfms
 
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
-  if the sub appears in ${template} then skip as will already have a xfm
-  if the sub is not in template then run mrregsiter
-
-
-  # Population_template by default is: rigid_affine_nonlinear
   mrregister \
     ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
     -type rigid_affine_nonlinear \
     ${fba}/template/wmfod_template.mif \
     -nl_warp ${fba}/template/study_template/xfms
-done
 
 
-   mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
-      -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-      ${fba}/template/wmfod_template.mif \
-      -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-      ${dir}/${ses}/fod/template-${sub}_warp.mif
-
-
-
-# Now register and transform all native timepoints
-# Use the affine to intra-pop and the warp of intra-pop to group
-
-for dir in ${fba}/data/sub-*; do
-  sub=$(basename ${dir})
+  # Now register and transform all native timepoints
+  # Use the affine to intra-pop and the warp of intra-pop to group
 
   for ses in ses-01 ses-02 ses-03; do
 
   # Compose transforms
   transformconvert \
-    point_to_rigid.txt \
-    point_to_native_ses.mif \
-    point_2_intra-template.mif \
+    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
+    ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif \
+    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
     flirt_import \
-    rigid_to_intra.mif
+    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif
 
   transformcompose \
-    rigid_to_intra.mif \
-    intra_to_study_warp.mif \
-    native_to_study_composed_warp.mif
-
+    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif
+    WHATEVER THIS TURN OUT 2 BE FROM NL_WARP^ :: ${fba}/template/study_template/xfms
+    ${fba}/data/${sub}/${ses}/fod/${sub}_composed_xfm.mif
+    
   # Apply to the mask
   mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    -warp ${fba}/data/${sub}/${ses}/fod/${sub}_composed_xfm.mif \
     -interp nearest -datatype bit \
-    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
+    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif -force
     
   done
 done
-
-
-
-
-
-
-
-    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
-      -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-      ${fba}/template/wmfod_template.mif \
-      -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-      ${dir}/${ses}/fod/template-${sub}_warp.mif
-
-
-
-
-
-
-
-
-
 
 
 
