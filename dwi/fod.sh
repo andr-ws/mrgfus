@@ -111,21 +111,74 @@ done
 
 # Longitudinal FBA (oh god)!
 
-# From what I understand:
+# Desc: generate rigid intra-pop templates and affine xfms for each session
+# Generate a study template and write out nlin warps for those individuals
+# Generate nonlinear study template warps for those not in the template
+# Compose the linear and nonlinear transforms
 
-# Trialling a rigid population_template per individual to generate a subject average image
-# Create a population_template from these average images from the subjects to construct the template from
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
 
-# Then just simply non-linearly register all native images to this template, as per:
-#https://community.mrtrix.org/t/replicating-longitudinal-fixel-based-analysis-approach/2071/16
-# Have opted against midway averaging etc as 3 subjects becomes dificult.
+  mkdir -p ${fba}/template/intra-temps/${sub}
 
-template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
+  # Initialize an empty list to store the images to feed into population_template
+  images_to_template=""
+
+  # Loop through possible sessions
+  for ses in ses-01 ses-02 ses-03; do
+    fod_in=${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif
+    fod_out=${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
+
+    if [ -f ${fod_in} ]; then
+      echo "  Found FOD for ${ses}, linking to intra-temp folder."
+      ln -sf ${fod_in} ${fod_out}
+
+      # Add to image list
+      images_to_template="${images_to_template} ${fod_out}"
+    else
+      echo "  No FOD found for ${ses}, skipping."
+    fi
+  done
+
+  # Run population_template with rigid registration
+  population_template \
+    ${images_to_template} \
+    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
+    -voxel_size 1.25 \
+    -type rigid \
+    -linear_transformations_dir ${fba}/template/intra-temps/${sub}/xfms
+  else
+    echo "  WARNING: Subject ${sub} has fewer than 2 sessions with FODs, skipping intra-template."
+  fi
+
+  echo "Done with subject: ${sub}"
+  echo "----------------------------"
+
+done
+
+  # Check which sessions the sub has (of ses-01 ses-02 ses-03)
+  # Check if the image ${sub}/${ses}/fod/${sub}_wmfod.mif exists
+  # If the image exists in that session, symbolic link it 
+  # ln -sf ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif \
+  # ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
+
+  
+  # Perform rigid intra-subject registration using the available session FODs
+  population_template \
+    ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif \
+    ${fba}/template/intra-temps/${sub}_avg.mif
+    -voxel_size 1.25 \
+    -type rigid \
+    -linear_transformations_dir
+
+done
+
+#!/bin/bash
 
 
-# The other possible option is to for all subjects create a rigid intra-pop template and write out affine xfm
-# Then, you would non-linearly warp the rigid intra-pop to the group to generate a nl-warp
-# Then you would compose the linear and warp when transforming the natives to the group template
+
+
+
 
 
 
@@ -140,46 +193,79 @@ while read -r sub; do
     #ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
   done
   
-  # Rigid intra-subject registration
-  population_template \
-    ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif \
-    ${fba}/template/intra-temps/${sub}_avg.mif
-    -voxel_size 1.25 \
-    -type rigid \
-    -linear_transformations_dir
 
-  rm -r ${fba}/template/intra-temps/${sub}/
+
+  
 done < $template
 
 # Now generate the study template # -mask ${fba}/template/${timepoint}/masks/ \ # May end up removing this?
 
+
+template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
+
 population_template \
   ${fba}/template/intra-temps/ \
   ${fba}/template/wmfod_template.mif \
-  -voxel_size 1.25
+  -voxel_size 1.25 \
+  -warp_dir ${fba}/template/xfms # -warp_dir provides warps for those in the template
 
-# Now register and transform all native timepoints
-# Use the affine to intra-pop and the warp of intra-pop to group
-for dir in ${fba}/data/sub-*; do
-  sub=$(basename ${dir})
+# Need to generate non-linear warps for those not inlcuded in the template
 
-  for ses in ses-01 ses-02 ses-03; do
-    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
+# Need a way to filter out those not included in the template 
+mrregister \
+  average
+
+
+
+   mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
       -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
       ${fba}/template/wmfod_template.mif \
       -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
       ${dir}/${ses}/fod/template-${sub}_warp.mif
 
-    mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-      -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-      -interp nearest -datatype bit \
-      ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
+
+
+# Now register and transform all native timepoints
+# Use the affine to intra-pop and the warp of intra-pop to group
+
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+
+  for ses in ses-01 ses-02 ses-03; do
+
+  # Compose transforms
+  transformconvert \
+    point_to_rigid.txt \
+    point_to_native_ses.mif \
+    point_2_intra-template.mif \
+    flirt_import \
+    rigid_to_intra.mif
+
+  transformcompose \
+    rigid_to_intra.mif \
+    intra_to_study_warp.mif \
+    native_to_study_composed_warp.mif
+
+  # Apply to the mask
+  mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    -interp nearest -datatype bit \
+    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
+    
   done
 done
 
 
 
 
+
+
+
+    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
+      -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+      ${fba}/template/wmfod_template.mif \
+      -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+      ${dir}/${ses}/fod/template-${sub}_warp.mif
 
 
 
