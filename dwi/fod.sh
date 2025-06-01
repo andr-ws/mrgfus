@@ -142,7 +142,7 @@ for dir in ${fba}/data/sub-*; do
   population_template \
     ${fba}/template/intra-temps/${sub}/fods/ \
     ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
-    -mask_dir ${fba}/template/intra-temps/${sub}/masks/
+    -mask_dir ${fba}/template/intra-temps/${sub}/masks/ \
     -voxel_size 1.25 \
     -type rigid \
     -linear_transformations_dir ${fba}/template/intra-temps/${sub}/xfms
@@ -152,46 +152,37 @@ for dir in ${fba}/data/sub-*; do
 
 done
 
-
-
-
-
-
-
-
-
-
-# Store intra-subject templates
+# Now generate the study template
+template=${der}/study_files/fba/template.txt
 while read -r sub; do
-  mkdir -p ${fba}/template/intra-temps/${sub}
-  for ses in ses-01 ses-02 ses-03; do
-    ln -sf ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
-    # Could generate the masks here as will only need those for template construction...
-    #ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
-  done
-  
-
-
-  
+  mkdir -p ${fba}/template/study_template/fods
+  ln -sf ${fba}/template/intra-temps/${sub}/${sub}_avg.mif ${fba}/template/study_template/fods/
 done < $template
 
-# Now generate the study template # -mask ${fba}/template/${timepoint}/masks/ \ # May end up removing this?
-
-
-template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
-
 population_template \
-  ${fba}/template/intra-temps/ \
-  ${fba}/template/wmfod_template.mif \
+  ${fba}/template/study_template/fods/ \
+  ${fba}/template/study_template/wmfod_template.mif \
   -voxel_size 1.25 \
-  -warp_dir ${fba}/template/xfms # -warp_dir provides warps for those in the template
+  -warp_dir ${fba}/template/study_template/xfms # -warp_dir provides warps for those in the template
 
 # Need to generate non-linear warps for those not inlcuded in the template
 
-# Need a way to filter out those not included in the template 
-mrregister \
-  average
+# I was thinking could do this:
 
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+
+  if the sub appears in ${template} then skip as will already have a xfm
+  if the sub is not in template then run mrregsiter
+
+
+  # Population_template by default is: rigid_affine_nonlinear
+  mrregister \
+    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
+    -type rigid_affine_nonlinear \
+    ${fba}/template/wmfod_template.mif \
+    -nl_warp ${fba}/template/study_template/xfms
+done
 
 
    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
