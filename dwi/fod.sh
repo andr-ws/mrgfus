@@ -119,22 +119,20 @@ done
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
-  mkdir -p ${fba}/template/intra-temps/${sub}
-
-  # Initialize an empty list to store the images to feed into population_template
-  images_to_template=""
+  mkdir -p ${fba}/template/intra-temps/${sub}/fods
+  mkdir -p ${fba}/template/intra-temps/${sub}/masks
 
   # Loop through possible sessions
   for ses in ses-01 ses-02 ses-03; do
     fod_in=${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif
-    fod_out=${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
+    fod_out=${fba}/template/intra-temps/${sub}/fods/${sub}_${ses}.mif
+    mask_in=${fba}/data/${sub}/${ses}/fod/${sub}_b0_brain_mask_us.mif
+    mask_out=${fba}/template/intra-temps/${sub}/masks/${sub}_${ses}.mif
 
     if [ -f ${fod_in} ]; then
       echo "  Found FOD for ${ses}, linking to intra-temp folder."
       ln -sf ${fod_in} ${fod_out}
-
-      # Add to image list
-      images_to_template="${images_to_template} ${fod_out}"
+      ln -sf ${mask_in} ${mask_out}
     else
       echo "  No FOD found for ${ses}, skipping."
     fi
@@ -142,8 +140,9 @@ for dir in ${fba}/data/sub-*; do
 
   # Run population_template with rigid registration
   population_template \
-    ${images_to_template} \
+    ${fba}/template/intra-temps/${sub}/fods/ \
     ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
+    -mask_dir ${fba}/template/intra-temps/${sub}/masks/
     -voxel_size 1.25 \
     -type rigid \
     -linear_transformations_dir ${fba}/template/intra-temps/${sub}/xfms
@@ -152,25 +151,6 @@ for dir in ${fba}/data/sub-*; do
   echo "----------------------------"
 
 done
-
-  # Check which sessions the sub has (of ses-01 ses-02 ses-03)
-  # Check if the image ${sub}/${ses}/fod/${sub}_wmfod.mif exists
-  # If the image exists in that session, symbolic link it 
-  # ln -sf ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif \
-  # ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
-
-  
-  # Perform rigid intra-subject registration using the available session FODs
-  population_template \
-    ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif \
-    ${fba}/template/intra-temps/${sub}_avg.mif
-    -voxel_size 1.25 \
-    -type rigid \
-    -linear_transformations_dir
-
-done
-
-#!/bin/bash
 
 
 
