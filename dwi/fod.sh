@@ -141,7 +141,7 @@ for dir in ${fba}/data/s*; do
       "${subj_ses_dir}/fod/${sub}_wmfod.mif" \
       -transformed_midway "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
                          "${fba}/template/${timepoint}/midway/${sub}_${ses}.mif" \
-      -nl_warp_full "${fba}/template/${timepoint}/midway/${sub}_intra-warp.mif
+      -nl_warp_full "${fba}/template/${timepoint}/midway/${sub}_intra-warp.mif"
 
       # 2) Average the two midway‐transformed images into a single “midway” image
       mrmath \
@@ -159,35 +159,38 @@ for dir in ${fba}/data/s*; do
   done
 done
 
+# Generate 
+template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
 
-${fba}/template/subjects.txt # contains the subjects for template construction, can be used for both also
+for timepoint in t6 t2; do
+  mkdir ${fba}/template/${timepoint}/fods # ${fba}/template/masks
+  while read -r sub; do
+    ln -sf ${fba}/template/${timepoint}/midway/${sub}_midway.mif ${fba}/template/${timepoint}/fods/
 
-# Use this file ^ to extract the midway images from above to create a template from
+    # Could generate the masks here as will only need those for template construction...
+    #ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
+  done < $template
+
+  # How do I handle the masks - mask them or just remove the -mask flag?
+  population_template \
+  ${fba}/template/${timepoint}/fods/ \
+  -mask ${fba}/template/${timepoint}/masks/ \ # May end up removing this?
+  ${fba}/template/${timepoint}/wmfod_template.mif \
+  -voxel_size 1.25 \
+  -initial_alignment geometric
 
 
 
-# Create population template from subset of ses-01
-template=${base}/derivatives/projects/study_files/sub_template.txt
-mkdir ${fba}/template ${fba}/template/fods ${fba}/template/masks
-
-while read -r sub; do
-  ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_wmfod.mif ${fba}/template/fods/
-  ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
-done < $template
-
-population_template \
-${fba}/template/fods/ \
--mask ${fba}/template/masks/ \
-${fba}/template/wmfod_template.mif \
--voxel_size 1.25 \
--initial_alignment geometric
 
 # Register wmFODs to template
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
+
+  # If the subjects midway file exists in the timepoint directory then register the appropriate files
+  # I.e., if the subject has a midway file in t6, register ses-01 and ses-02 to template in t6
+  # I.e., if the subject has a midway file in t12, register ses-01 and ses-03 to template in t12
   
-  for ses in ses-01 ses-02 ses-03; do
-  
+    
     mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
     ${fba}/template/wmfod_template.mif \
     -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
@@ -200,6 +203,13 @@ for dir in ${fba}/data/sub-*; do
     ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
   done
 done
+
+
+
+
+
+
+
 
 mrmath ${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
 min \
