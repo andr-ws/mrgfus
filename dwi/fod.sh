@@ -147,9 +147,6 @@ for dir in ${fba}/data/sub-*; do
     -voxel_size 1.25 \
     -type rigid \
     -linear_transformations_dir ${fba}/template/intra-temps/${sub}/xfms
-  else
-    echo "  WARNING: Subject ${sub} has fewer than 2 sessions with FODs, skipping intra-template."
-  fi
 
   echo "Done with subject: ${sub}"
   echo "----------------------------"
