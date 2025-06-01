@@ -112,18 +112,14 @@ done
 
 # Longitudinal FBA (oh god)!
 
-# Trialling a rigid population_template per individual to generate a subject average image
-# But this needs to provide a transform ->>
+# From what I understand:
 
+# Trialling a rigid population_template per individual to generate a subject average image
 # Create a population_template from these average images from the subjects to construct the template from
 
-# Then for each intra-subject averaged image, compute warp between the averaged image to the template
-# Then compose the transform used to register each native to the average, with the average to the template
-
-
-
-
-
+# Then just simply non-linearly register all native images to this template, as per:
+#https://community.mrtrix.org/t/replicating-longitudinal-fixel-based-analysis-approach/2071/16
+# Have opted against midway averaging etc as 3 subjects becomes dificult.
 
 for dir in ${fba}/data/s*; do
   sub=$(basename ${dir})
