@@ -1,5 +1,5 @@
 #! /bin/bash
-set +H  # Disable history expansion
+
 export FREESURFER_HOME=/Applications/freesurfer
 source $FREESURFER_HOME/SetUpFreeSurfer.sh
 
@@ -7,13 +7,12 @@ source $FREESURFER_HOME/SetUpFreeSurfer.sh
 base=~/imaging/datasets/mrgfus
 raw=${base}/rawdata
 dwi=${base}/derivatives/data/dwi
-fba=${base}/derivatives/projects/fba
+fba=${base}/derivatives/fba
 
 for dir in ${dwi}/sub-*; do
   sub=$(basename ${dir})
 
   for ses in ses-01 ses-02 ses-03; do
-
     if [ ! -d ${dir}/${ses}/eddy ]; then
       echo "Skipping subject ${sub} ${ses} - this directory is not found!"
       continue
@@ -121,6 +120,75 @@ done
 #https://community.mrtrix.org/t/replicating-longitudinal-fixel-based-analysis-approach/2071/16
 # Have opted against midway averaging etc as 3 subjects becomes dificult.
 
+template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
+
+# Store intra-subject templates
+while read -r sub; do
+  mkdir -p ${fba}/template/intra-temps/${sub}
+  for ses in ses-01 ses-02 ses-03; do
+    ln -sf ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif
+    # Could generate the masks here as will only need those for template construction...
+    #ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
+  done
+  
+  # Rigid intra-subject registration
+  population_template \
+    ${fba}/template/intra-temps/${sub}/${sub}_${ses}_wmfod.mif \
+    ${fba}/template/intra-temps/${sub}_avg.mif
+    -voxel_size 1.25 \
+    -type rigid
+
+  rm -r ${fba}/template/intra-temps/${sub}/
+done < $template
+
+# Now generate the study template # -mask ${fba}/template/${timepoint}/masks/ \ # May end up removing this?
+
+population_template \
+  ${fba}/template/intra-temps/ \
+  ${fba}/template/wmfod_template.mif \
+  -voxel_size 1.25
+
+# Now non-linearly register and transform all native timepoints
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+
+  for ses in ses-01 ses-02 ses-03; do
+    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif \
+      -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+      ${fba}/template/wmfod_template.mif \
+      -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+      ${dir}/${ses}/fod/template-${sub}_warp.mif
+
+    mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+      -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+      -interp nearest -datatype bit \
+      ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
+  done
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 for dir in ${fba}/data/s*; do
   sub=$(basename ${dir})
   
@@ -166,16 +234,10 @@ for dir in ${fba}/data/s*; do
 done
 
 # Generate 
-template=${der}/study_files/fba/template.txt # contains the subjects for (both) template construction
 
 for timepoint in t6 t2; do
   mkdir ${fba}/template/${timepoint}/fods # ${fba}/template/masks
-  while read -r sub; do
-    ln -sf ${fba}/template/${timepoint}/midway/${sub}_midway.mif ${fba}/template/${timepoint}/fods/
 
-    # Could generate the masks here as will only need those for template construction...
-    #ln -sf ${fba}/data/${sub}/ses-01/fod/${sub}_b0_brain_mask_us.mif ${fba}/template/masks/${sub}_mask.mif
-  done < $template
 
   # How do I handle the masks - mask them or just remove the -mask flag?
   population_template \
@@ -188,27 +250,7 @@ for timepoint in t6 t2; do
 
 
 
-# Register wmFODs to template
-for dir in ${fba}/data/sub-*; do
-  sub=$(basename ${dir})
 
-  # If the subjects midway file exists in the timepoint directory then register the appropriate files
-  # I.e., if the subject has a midway file in t6, register ses-01 and ses-02 to template in t6
-  # I.e., if the subject has a midway file in t12, register ses-01 and ses-03 to template in t12
-  
-    
-    mrregister ${dir}/${ses}/fod/${sub}_wmfod.mif -mask1 ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    ${fba}/template/wmfod_template.mif \
-    -nl_warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    ${dir}/${ses}/fod/template-${sub}_warp.mif
-
-    # Transform to template
-    mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    -interp nearest -datatype bit \
-    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
-  done
-done
 
 
 
