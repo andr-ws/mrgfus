@@ -200,17 +200,20 @@ for dir in ${fba}/data/sub-*; do
   done
 done
 
-mrmath ${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
+# Compute wmfod template mask
+mrmath \
+${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
 min \
-${fba}/template/template_mask.mif -datatype bit
+${fba}/template/study_template/template_mask.mif \
+-datatype bit
 
-# Define group white matter fixel mask and estimate fixel metrics for each patient
-# 0.08 looks the most balanced from testing (0.06 > 0.1)
-fod2fixel \
--mask ${fba}/template/template_mask.mif \
+# Define group white matter fixel mask and estimate fixel metrics for each patient (0.06 to 0.1)
+fod2fixel \ <--- MAYBE TEST THESE...
+-mask ${fba}/template/study_template/template_mask.mif \
 -fmls_peak_value 0.08 \
-${fba}/template/wmfod_template.mif \
-${fba}/template/fixel_mask
+${fba}/template/study_template/wmfod_template.mif \
+${fba}/template/study_template/fixel_mask
+
 
 # Segment FOD images to estimate fixels and their AFD
 for dir in ${fba}/data/sub-*; do
