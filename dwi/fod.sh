@@ -186,7 +186,13 @@ for dir in ${fba}/data/sub-*; do
   # Use the affine to intra-pop and the warp of intra-pop to group
 
   for ses in ses-01 ses-02 ses-03; do
-  
+
+  # Compose for ease and later when need single file
+  transformcompose \
+  ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
+  ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
+  ${dir}/${ses}/fod/${sub}_${ses}-composed_warp.mif
+
   # Apply to the mask
   mrtransform \
     ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
