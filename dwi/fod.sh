@@ -278,7 +278,7 @@ for dir in ${fba}/data/sub-*; do
 done
 
 # Copy files for, and compute fdc
-mkdir ${fba}/template/fdc
+mkdir ${fba}/template/study_template/fdc
 cp ${fba}/template/study_template/fc/index.mif ${fba}/template/study_template/fc/directions.mif \
 ${fba}/template/study_template/fdc
 
