@@ -289,13 +289,29 @@ for dir in ${fba}/data/sub-*; do
    done
 done
 
-tckgen
-tcksfit2
+# Generate tractogram
+tckgen \
+-angle 22.5 \
+-maxlen 250 \
+-minlen 10 \
+-power 1.0 \
+${fba}/template/study_template/wmfod_template.mif \
+-seed_image ${fba}/template/study_template/template_mask.mif \
+-select 20000000 \
+-cutoff 0.08  \ # matched to the fod2fixel threshold
+${fba}/template/study_template/tractogram_20mil.tck
+
+# SIFT tractogram
+tcksift \
+${fba}/template/study_template/tractogram_20mil.tck \
+${fba}/template/study_template/wmfod_template.mif \
+${fba}/template/study_tmnplate/tractogram_2mil_SIFT.tck \
+-term_number 2000000
 
 # Compute fixel-fixel connectivity matrix
 fixelconnectivity \
 fixel_mask/ \
-${fba}/template/tractogram_4mil_SIFT.tck matrix/ \
+${fba}/template/study_tenplate/tractogram_2mil_SIFT.tck matrix/ \
 -force
 
 # Smooth metric data using the fixel-fixel connectivity matrix
