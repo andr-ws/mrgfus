@@ -167,17 +167,20 @@ population_template \
 # Population_template by default is: rigid_affine_nonlinear
 # Want to use this on all subjects for consistency
 
-mkdir ${fba}/template/study_template/xfms
+mkdir -p \
+${fba}/template/study_template/xfms/template \
+${fba}/template/study_template/xfms/native
 
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
   mrregister \
-    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
-    -type rigid_affine_nonlinear \
-    ${fba}/template/wmfod_template.mif \
-    -nl_warp ${fba}/template/study_template/xfms
-
+  ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
+  -type rigid_affine_nonlinear \
+  ${fba}/template/study_template/wmfod_template.mif \
+  -nl_warp \
+  ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
+  ${fba}/template/study_template/xfms/native/temp-${sub}_warp.mif
 
   # Now register and transform all native timepoints
   # Use the affine to intra-pop and the warp of intra-pop to group
