@@ -207,13 +207,14 @@ min \
 ${fba}/template/study_template/template_mask.mif \
 -datatype bit
 
+for value in 0.06 0.07 0.08 0.09 0.1; do
 # Define group white matter fixel mask and estimate fixel metrics for each patient (0.06 to 0.1)
 fod2fixel \ <--- MAYBE TEST THESE...
 -mask ${fba}/template/study_template/template_mask.mif \
--fmls_peak_value 0.08 \
+-fmls_peak_value ${value} \
 ${fba}/template/study_template/wmfod_template.mif \
-${fba}/template/study_template/fixel_mask
-
+${fba}/template/study_template/fixel_mask_${value}
+done
 
 # Segment FOD images to estimate fixels and their AFD
 for dir in ${fba}/data/sub-*; do
@@ -284,6 +285,9 @@ for dir in ${fba}/data/sub-*; do
      -force
    done
 done
+
+tckgen
+tcksfit2
 
 # Compute fixel-fixel connectivity matrix
 fixelconnectivity \
