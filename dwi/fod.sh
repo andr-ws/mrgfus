@@ -248,7 +248,7 @@ for dir in ${fba}/data/sub-*; do
     # Assign subjects fixels to template fixels
     fixelcorrespondence \
     ${dir}/${ses}/fixels/${sub}_fixel-template/fd.mif \
-    ${fba}/template/study_template/fixel_mask \
+    ${fba}/template/study_template/fixel_mask_08 \
     ${fba}/template/study_template/fd \
     ${sub}_${ses}.mif \
     -force
@@ -256,7 +256,7 @@ for dir in ${fba}/data/sub-*; do
     # Compute FC metric
     warp2metric \
     ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    -fc ${fba}/template/study_template/fixel_mask \
+    -fc ${fba}/template/study_template/fixel_mask_08 \
     ${fba}/template/study_template/fc \
     ${sub}_${ses}.mif \
     -force
