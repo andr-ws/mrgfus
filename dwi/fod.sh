@@ -198,96 +198,17 @@ for dir in ${fba}/data/sub-*; do
   transformcompose \
     ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif \
     ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
-    ${fba}/data/${sub}/${ses}/fod/${sub}_composed_xfm.mif
+    ${fba}/template/study_template/xfms/composed/${sub}_${ses}-composed_warp.mif
     
   # Apply to the mask
-  mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -warp ${fba}/data/${sub}/${ses}/fod/${sub}_composed_xfm.mif \
+  mrtransform \
+    ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+    -warp ${fba}/template/study_template/xfms/composed/${sub}_${ses}-composed_warp.mif \
     -interp nearest -datatype bit \
-    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif -force
+    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
     
   done
 done
-
-
-
-
-
-
-
-
-
-
-
-for dir in ${fba}/data/s*; do
-  sub=$(basename ${dir})
-  
-  for timepoint in t6 t12; do
-    # Determine which session corresponds to this timepoint
-    if [ "$timepoint" = "t6" ]; then
-      ses="ses-02"
-    else
-      ses="ses-03"
-    fi
-
-    # Construct the path to the subject's data for that session
-    subj_ses_dir="${fba}/data/${sub}/${ses}"
-
-    # Only proceed if that session directory actually exists
-    if [ -d "$subj_ses_dir" ]; then
-      # Create the "midway" output directory under template/<timepoint>
-      mkdir -p "${fba}/template/${timepoint}/midway"
-
-      # 1) Run mrregister to align sess-01 ↔ current session
-      mrregister \
-      -type rigid \
-      "${fba}/data/${sub}/ses-01/fod/${sub}_wmfod.mif" \
-      "${subj_ses_dir}/fod/${sub}_wmfod.mif" \
-      -transformed_midway "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
-                         "${fba}/template/${timepoint}/midway/${sub}_${ses}.mif" \
-      -nl_warp_full "${fba}/template/${timepoint}/midway/${sub}_intra-warp.mif"
-
-      # 2) Average the two midway‐transformed images into a single “midway” image
-      mrmath \
-      "${fba}/template/${timepoint}/midway/${sub}_ses-01.mif" \
-      "${fba}/template/${timepoint}/midway/${sub}_${ses}.mif" \
-      mean \
-      "${fba}/template/${timepoint}/midway/${sub}_midway.mif"
-
-      # 3) Remove the two intermediate “_ses-01” and “_${ses}” files, leaving only the final average
-      rm "${fba}/template/${timepoint}/midway/${sub}_s"*.mif
-    else
-      # If the directory doesn't exist, just skip to the next timepoint
-      continue
-    fi
-  done
-done
-
-# Generate 
-
-for timepoint in t6 t2; do
-  mkdir ${fba}/template/${timepoint}/fods # ${fba}/template/masks
-
-
-  # How do I handle the masks - mask them or just remove the -mask flag?
-  population_template \
-  ${fba}/template/${timepoint}/fods/ \
-  -mask ${fba}/template/${timepoint}/masks/ \ # May end up removing this?
-  ${fba}/template/${timepoint}/wmfod_template.mif \
-  -voxel_size 1.25 \
-  -initial_alignment geometric
-
-
-
-
-
-
-
-
-
-
-
-
 
 mrmath ${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
 min \
