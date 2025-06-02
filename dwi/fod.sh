@@ -248,43 +248,47 @@ for dir in ${fba}/data/sub-*; do
     # Assign subjects fixels to template fixels
     fixelcorrespondence \
     ${dir}/${ses}/fixels/${sub}_fixel-template/fd.mif \
-    ${fba}/template/fixel_mask \
-    ${fba}/template/fd \
+    ${fba}/template/study_template/fixel_mask \
+    ${fba}/template/study_template/fd \
     ${sub}_${ses}.mif \
     -force
 
     # Compute FC metric
     warp2metric \
     ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    -fc ${fba}/template/fixel_mask \
-    ${fba}/template/fc \
+    -fc ${fba}/template/study_template/fixel_mask \
+    ${fba}/template/study_template/fc \
     ${sub}_${ses}.mif \
     -force
   done
 done
 
 # Copy files for, and compute log-fc
-mkdir ${fba}/template/log_fc
-cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/log_fc
+mkdir ${fba}/template/study_template/log_fc
+cp ${fba}/template/study_template/fc/index.mif ${fba}/template/study_template/fc/directions.mif \
+${fba}/template/study_template/log_fc
+
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/fc/${sub}_${ses}.mif \
-     -log ${fba}/template/log_fc/${sub}_${ses}.mif \
+     ${fba}/template/study_template/fc/${sub}_${ses}.mif \
+     -log ${fba}/template/study_template/log_fc/${sub}_${ses}.mif \
      -force
    done
 done
 
 # Copy files for, and compute fdc
 mkdir ${fba}/template/fdc
-cp ${fba}/template/fc/index.mif ${fba}/template/fc/directions.mif ${fba}/template/fdc
+cp ${fba}/template/study_template/fc/index.mif ${fba}/template/study_template/fc/directions.mif \
+${fba}/template/study_template/fdc
+
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/fd/${sub}_${ses}.mif ${fba}/template/fc/${sub}_${ses}.mif -mult \
-     ${fba}/template/fdc/${sub}_${ses}.mif \
+     ${fba}/template/study_template/fd/${sub}_${ses}.mif ${fba}/template/study_template/fc/${sub}_${ses}.mif -mult \
+     ${fba}/template/study_template/fdc/${sub}_${ses}.mif \
      -force
    done
 done
@@ -305,7 +309,7 @@ ${fba}/template/study_template/tractogram_20mil.tck
 tcksift \
 ${fba}/template/study_template/tractogram_20mil.tck \
 ${fba}/template/study_template/wmfod_template.mif \
-${fba}/template/study_tmnplate/tractogram_2mil_SIFT.tck \
+${fba}/template/study_template/tractogram_2mil_SIFT.tck \
 -term_number 2000000
 
 # Compute fixel-fixel connectivity matrix
@@ -317,10 +321,13 @@ ${fba}/template/study_tenplate/tractogram_2mil_SIFT.tck matrix/ \
 # Smooth metric data using the fixel-fixel connectivity matrix
 for metric in fd log_fc fdc; do
   fixelfilter \
-  ${fba}/template/${metric} \
-  smooth ${fba}/template/${metric}_smooth \
-  -matrix ${fba}/template/matrix/
+  ${fba}/template/study_template/${metric} \
+  smooth ${fba}/template/study_template/${metric}_smooth \
+  -matrix ${fba}/template/study_template/matrix/
 done
+
+
+
 
 # To integrate: percent change images for postop. timepoints
 fdcdir=/Volumes/LA_4TB/datasetsmrgfus/derivatives/fba/template/fdc_smooth
