@@ -190,8 +190,8 @@ for dir in ${fba}/data/sub-*; do
   # Apply to the mask
   mrtransform \
     ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -linear ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt
-    -warp ${fba}/template/study_template/xfms/composed/${sub}_${ses}-composed_warp.mif \
+    -linear ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
+    -warp ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
     -interp nearest -datatype bit \
     ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif \
     -template ${fba}/template/study_template/wmfod_template.mif \
