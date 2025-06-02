@@ -186,27 +186,17 @@ for dir in ${fba}/data/sub-*; do
   # Use the affine to intra-pop and the warp of intra-pop to group
 
   for ses in ses-01 ses-02 ses-03; do
-
-  # Compose transforms
-  transformconvert \
-    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
-    ${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif \
-    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
-    flirt_import \
-    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif
-
-  transformcompose \
-    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif \
-    ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
-    ${fba}/template/study_template/xfms/composed/${sub}_${ses}-composed_warp.mif
-    
+  
   # Apply to the mask
   mrtransform \
     ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
+    -linear ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt
     -warp ${fba}/template/study_template/xfms/composed/${sub}_${ses}-composed_warp.mif \
     -interp nearest -datatype bit \
-    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif
-    
+    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif \
+    -template ${fba}/template/study_template/wmfod_template.mif \
+    -force
+
   done
 done
 
