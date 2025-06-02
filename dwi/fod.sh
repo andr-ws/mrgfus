@@ -168,8 +168,7 @@ population_template \
 # Want to use this on all subjects for consistency
 
 mkdir -p \
-${fba}/template/study_template/xfms/template \
-${fba}/template/study_template/xfms/native
+${fba}/template/study_template/intra-template_xfms
 
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
@@ -179,8 +178,10 @@ for dir in ${fba}/data/sub-*; do
   -type rigid_affine_nonlinear \
   ${fba}/template/study_template/wmfod_template.mif \
   -nl_warp \
-  ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
-  ${fba}/template/study_template/xfms/native/temp-${sub}_warp.mif
+  ${fba}/template/study_template/intra-template_xfms/${sub}_intra-temp_warp.mif \
+  ${fba}/template/study_template/intra-template_xfms/tmp_${sub}_warp.mif # remove these
+
+  rm ${fba}/template/study_template/intra-template_xfms/tmp_${sub}_warp.mif
 
   # Now register and transform all native timepoints
   # Use the affine to intra-pop and the warp of intra-pop to group
@@ -190,18 +191,16 @@ for dir in ${fba}/data/sub-*; do
   # Compose for ease and later when need single file
   transformcompose \
   ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
-  ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
-  ${dir}/${ses}/fod/${sub}_${ses}-composed_warp.mif
+  ${fba}/template/study_template/intra-template_xfms/${sub}_intra-temp_warp.mif \
+  ${dir}/${ses}/fod/${sub}-template_warp.mif
 
   # Apply to the mask
   mrtransform \
     ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -linear ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
-    -warp ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
+    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
     -interp nearest -datatype bit \
     ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif \
-    -template ${fba}/template/study_template/wmfod_template.mif \
-    -force
+    -template ${fba}/template/study_template/wmfod_template.mif
 
   done
 done
@@ -213,14 +212,12 @@ min \
 ${fba}/template/study_template/template_mask.mif \
 -datatype bit
 
-for value in 0.06 0.07 0.08 0.09 0.1; do
-# Define group white matter fixel mask and estimate fixel metrics for each patient (0.06 to 0.1)
-fod2fixel \ <--- MAYBE TEST THESE...
+# Define group white matter fixel mask and estimate fixel metrics for each patient
+fod2fixel
 -mask ${fba}/template/study_template/template_mask.mif \
--fmls_peak_value ${value} \
+-fmls_peak_value 0.08 \
 ${fba}/template/study_template/wmfod_template.mif \
-${fba}/template/study_template/fixel_mask_${value}
-done
+${fba}/template/study_template/fixel_mask_08
 
 # Segment FOD images to estimate fixels and their AFD
 for dir in ${fba}/data/sub-*; do
@@ -235,7 +232,7 @@ for dir in ${fba}/data/sub-*; do
     ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif
     
     fod2fixel \
-    -mask ${fba}/template/template_mask.mif \
+    -mask ${fba}/template/study_template/template_mask.mif \
     ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif \
     ${dir}/${ses}/fixels/${sub}_fixel-template_noreo \
     -afd ${ses}_fd.mif \
