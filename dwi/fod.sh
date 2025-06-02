@@ -196,8 +196,8 @@ for dir in ${fba}/data/sub-*; do
     ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif
 
   transformcompose \
-    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif
-    WHATEVER THIS TURN OUT 2 BE FROM NL_WARP^ :: ${fba}/template/study_template/xfms
+    ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.mif \
+    ${fba}/template/study_template/xfms/template/${sub}-temp_warp.mif \
     ${fba}/data/${sub}/${ses}/fod/${sub}_composed_xfm.mif
     
   # Apply to the mask
