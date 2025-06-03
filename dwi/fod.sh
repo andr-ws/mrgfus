@@ -352,10 +352,10 @@ antsRegistrationSyN.sh \
 
 # Percent change images for postop. timepoints
 fdcdir=${fba}/template/study_template/metrics/fdc_smooth
-
+analysis=${fba}/analysis
 # Create output directories
 mkdir -p ${analysis}/group_fba/6m_pc \
-${analysis}/group_fba/12_pc
+${analysis}/group_fba/12m_pc
 
 # Loop through ses-01 files
 for pre in ${fdcdir}/sub-*_ses-01.mif; do
@@ -387,10 +387,24 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   fi
 done
 
+# 6-month and 12-month percent change analyses
 for tp in 6m 12m; do
-  etc..
-  fixelcfestats ..
+  ln -s ${fba}/template/study_template/metrics/fdc_smooth/directions.mif \
+  ${fba}/template/study_template/metrics/fdc_smooth/index.mif \
+  ${analysis}/group_fba/${tp}_pc/
+
+  fixelcfestats \
+  ${analysis}/group_fba/${tp}_pc \
+  ${analysis}/cfe_files/group_analyses/${tp}_subs.txt \
+  ${analysis}/cfe_files/group_analyses/${tp}_demeaned.txt \
+  ${analysis}/cfe_files/group_analyses/corr_con.txt \
+  ${fba}/template/study_template/matrix \
+  ${analysis}/cfe_files/group_analyses/${tp}_results
 done
+
+# Preoperative severity analysis
+
+
 
 
 ###################
