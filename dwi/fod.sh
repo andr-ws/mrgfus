@@ -403,9 +403,13 @@ for tp in 6m 12m; do
 done
 
 # Preoperative severity analysis
-
-
-
+fixelcfestats \
+  ${fba}/template/study_template/metrics/fdc_smooth  \
+  ${analysis}/cfe_files/group_analyses/pre_subs.txt \
+  ${analysis}/cfe_files/group_analyses/pre_demeaned.txt \
+  ${analysis}/cfe_files/group_analyses/corr_con.txt \
+  ${fba}/template/study_template/matrix \
+  ${analysis}/cfe_files/group_analyses/pre_results
 
 ###################
 
