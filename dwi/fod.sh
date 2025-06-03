@@ -387,18 +387,18 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   fi
 done
 
-fixelcfestats ... 
+for tp in 6m 12m; do
+  etc..
+  fixelcfestats ..
+done
 
 
+###################
 
 
-
-# CREATE A .CSV FILE TO STORE THE MEAN VALUE PER SESSION
-# IF SUBJECT DOESN'T HAVE THE SESSION, ENTRY = NA
-
-# I want these to have rows as subject ID's and 3 columns for sessions (ses-01, ses-02, ses-03)
-echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/lh_hypo.csv
-echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/rh_hypo.csv
+# Store the FDC value of the sweetspot per session (else NA)
+echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/lh.csv 
+echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/rh.csv
 
 # Loop through each subject
 for dir in ${fba}/data/sub-*; do
@@ -410,7 +410,7 @@ for dir in ${fba}/data/sub-*; do
 
   # Loop through sessions
   for ses in ses-01 ses-02 ses-03; do
-    fdc_mif="${fba}/template/fdc_smooth/${sub}_${ses}.mif"
+    fdc_mif="${fba}/template/study_template/metrics/fdc_smooth/${sub}_${ses}.mif"
     fdc_nii="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_map.nii.gz"
 
     # Check if input file exists
