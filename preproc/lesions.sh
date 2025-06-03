@@ -36,29 +36,25 @@ for dir in ${raw}/sub-*; do
 done
 
 # Flip rh lesions to lh
-
-
-
+matlab \
+  -nodisplay \
+  -nosplash \
+  -r "run('/Users/neuro-239/scripts/flip_rh_lesions.m'); exit;"
 
 # Modelling
 
 mkdir ${lesions}/model
-lh_subs=${der}/study_files/lh_subs.txt
-
-
-rh_subs=${der}/study_files/rh_subs.txt
-
-# Need to execute the nlin flipping of just the subjects here
-
-
-
-
 
 mkdir ${lesions}/model/tmp
 while read sub; do
   ln -s ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
   ${lesions}/model/tmp/
 done < ${lh_subs}
+
+while read sub; do
+  ln -s ${lesions}/masks/mni/${sub}/${sub}_flesion.nii.gz \
+  ${lesions}/model/tmp/${sub}_lesion.nii.gz
+done < ${rh_subs}
 
 # Create a 4D lesion input
 mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/4d_lesions.nii.gz
