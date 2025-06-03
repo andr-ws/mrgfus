@@ -62,12 +62,14 @@ fslmaths ${lesions}/model/n-map.nii.gz -thrP 10 -bin ${lesions}/model/n-map_thr.
 mrconvert ${lesions}/model/n-map_thr.nii.gz - | mrcalc - 1 nan -if ${lesions}/model/n-map_thr.nii.gz -force
 
 randomise \
-  -i <4D_input_data> \
-  -o <output_rootname> \
+  -i ${lesions}/model/4d_lesions.nii.gz \
+  -o ${lesions}/model/randomise \
   -d design.mat \
   -t design.con \
-  -m <mask_image> \
-  -n 500 -D -T
+  -m ${lesions}/model/n-map_thr.nii.gz \
+  -n 10000 \
+  -D \
+  -T
 
 
 
