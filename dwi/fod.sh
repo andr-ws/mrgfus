@@ -413,10 +413,13 @@ fixelcfestats \
 
 ###################
 
-
 # Store the FDC value of the sweetspot per session (else NA)
+
+# BUT NEED TO FIRST FLIP THE SWEETSPOT ONTO OTHER HEMI AND THEN WORK OUT WAY OF INDEXING THE TARGETED HEMI TO MULTIPLY BY WHICH HEMI SWEETSPOT
+
 echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/lh.csv 
 echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/rh.csv
+sweetspot=${fba}/analysis/sweetspot/sweetspot.nii.gz
 
 # Loop through each subject
 for dir in ${fba}/data/sub-*; do
@@ -436,7 +439,6 @@ for dir in ${fba}/data/sub-*; do
       fixel2voxel "$fdc_mif" mean "$fdc_nii"
 
       for hemi in lh rh; do
-        hypo_mask="${fba}/template/masks/${hemi}_hypo.nii.gz"
         fdc_masked="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_${hemi}_hypo.nii.gz"
 
         fslmaths "$fdc_nii" -mul "$hypo_mask" "$fdc_masked"
