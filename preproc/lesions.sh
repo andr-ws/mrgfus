@@ -34,3 +34,15 @@ for dir in ${raw}/sub-*; do
     -o ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
     --interpolation NearestNeighbor
 done
+
+# Modelling
+
+mkdir ${lesions}/model
+
+# Create an N-map
+
+
+
+
+
+
