@@ -313,16 +313,17 @@ ${fba}/template/study_template/tractogram_2mil_SIFT.tck \
 
 # Compute fixel-fixel connectivity matrix
 fixelconnectivity \
-fixel_mask/ \
-${fba}/template/study_tenplate/tractogram_2mil_SIFT.tck matrix/ \
+${fba}/template/study_template/fixel_mask_08/ \
+${fba}/template/study_template/tractogram_2mil_SIFT.tck \
+${fba}/template/study_template/matrix/ \
 -force
 
 # Smooth metric data using the fixel-fixel connectivity matrix
 for metric in fd log_fc fdc; do
-  fixelfilter \
-  ${fba}/template/study_template/${metric} \
-  smooth ${fba}/template/study_template/${metric}_smooth \
-  -matrix ${fba}/template/study_template/matrix/
+fixelfilter \
+${fba}/template/study_template/${metric} \
+smooth ${fba}/template/study_template/${metric}_smooth \
+-matrix ${fba}/template/study_template/matrix/
 done
 
 
