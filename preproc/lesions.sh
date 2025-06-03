@@ -4,6 +4,7 @@
 raw=/Volumes/LA_4TB/datasets/mrgfus/rawdata
 der=/Volumes/LA_4TB/datasets/mrgfus/derivatives
 lesions=${der}/lesions
+MNI=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
 
 # Need to generate coreg btwn lesion T2 and ses-01 T1
 for dir in ${raw}/sub-*; do
@@ -20,5 +21,16 @@ for dir in ${raw}/sub-*; do
     -o ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_ \
     -t r \
     -n 12
-    
+  
+  # Warp the lesion masks
+  mkdir -p ${lesions}/masks/mni/${sub}
+
+  antsApplyTransforms -d 3 \
+    -i ${lesions}/masks/nii/${sub}_lesion.nii.gz \
+    -r ${MNI} \
+    -t ${der}/anat/${sub}/ses-01/${sub}_T1w-MNI_05mm_1Warp.nii.gz \
+    -t ${der}/anat/${sub}/ses-01/${sub}_T1w-MNI_05mm_0GenericAffine.mat \
+    -t ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_0GenericAffine.mat \
+    -o ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
+    --interpolation NearestNeighbor
 done
