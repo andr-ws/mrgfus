@@ -419,85 +419,48 @@ fixelcfestats \
 # BUT ALSO NEED THEM ACCURATELY IN WMFOD SPACE
 # TRY AND GET ON CLUSTER TO USE SYNTHMORPH
 
-echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/lh.csv 
-echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/rh.csv
-lh_sweetspot=${fba}/analysis/sweetspot/lh_sweetspot.nii.gz
-rh_sweetspot=${fba}/analysis/sweetspot/rh_sweetspot.nii.gz # nlin flipped
+csv_out=${fba}/analysis/sweetspot/sweetspot_fdc.csv
+echo "sub-id,ses-01,ses-02,ses-03" > ${csv_out}
+hemis=${fba}/analysis/sweetspot/hemis.txt # contains hemi id (lh/rh)
+mkdir -p ${fba}/analysis/sweetspot/fdc_maps
 
 # Loop through each subject
-for dir in ${fba}/data/sub-*; do
-  sub=$(basename ${dir})
+while read -r sub hemi; do
   echo "Processing $sub"
+  # extract entry in 2nd column of ${hemis} to determine which sweetspot to use
+  sweetspot_hemi="${fba}/analysis/sweetspot/${hemi}_sweetspot.nii.gz"
 
-  lh_line="$sub"
-  rh_line="$sub"
+  # Initialize CSV line
+  line="$sub"
 
   # Loop through sessions
   for ses in ses-01 ses-02 ses-03; do
     fdc_mif="${fba}/template/study_template/metrics/fdc_smooth/${sub}_${ses}.mif"
     fdc_nii="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_map.nii.gz"
+    fdc_masked="${fba}/analysis/sweetspot/fdc_maps/${sub}_${ses}_fdc_masked.nii.gz"
 
     # Check if input file exists
     if [[ -f "$fdc_mif" ]]; then
-      fixel2voxel "$fdc_mif" mean "$fdc_nii"
-
-      for hemi in lh rh; do
-        fdc_masked="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_${hemi}_hypo.nii.gz"
-
-        fslmaths "$fdc_nii" -mul "$hypo_mask" "$fdc_masked"
-        value=$(fslstats "$out_masked" -M)
-
-        # Append value to the correct hemisphere line
-        if [ "$hemi" == "lh" ]; then
-          lh_line="$lh_line,$value"
-        else
-          rh_line="$rh_line,$value"
-        fi
-      done
+      fixel2voxel "$fdc_mif" mean "$fdc_nii" # maybe look into complexity
+      
+      fslmaths "$fdc_nii" -mul "$sweetspot_hemi" "$fdc_masked"
+      value=$(fslstats "$fdc_masked" -M)
     else
-      # If file doesn't exist, append NA
-      lh_line="$lh_line,NA"
-      rh_line="$rh_line,NA"
+      echo "  $ses: Missing FDC file."
+      value="NA"
     fi
-  done
 
+    # Append value to line
+    line=",$line,$value"
+  done
   # Append full row to CSV
-  echo "$lh_line" >> ${fba}/analysis/lh_hypo.csv
-  echo "$rh_line" >> ${fba}/analysis/rh_hypo.csv
-done
-
-# Hypointensity permutation modelling
-for dir in ${fba}/data/sub-*; do
-  sub=$(basename ${dir})
-
-  for hemi in lh rh; do
-
-  # 6-months
-  fslmaths \
-    ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -sub ${fba}/data/${sub}/ses-02/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -mul 100 ${fba}/data/${sub}/ses-02/${sub}_hypo_pc.nii.gz
-
-  # 12-months
-  fslmaths \
-    ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -sub ${fba}/data/${sub}/ses-03/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -div ${fba}/data/${sub}/ses-01/fod/${sub}_fdc_${hemi}_hypo.nii.gz \
-    -mul 100 ${fba}/data/${sub}/ses-03/${sub}_hypo_pc.nii.gz
-
-  done
-done
-
-fslrandomise...
+  echo "$line" >> "$csv_out"
+done < ${hemis}
 
 
 
 
-
-
+# Wander if FDC maps in randomise may be useful?
 
 
 # Calculate brain atrophy using a regression-residuals method (TBV~ICV)
-
-
