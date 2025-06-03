@@ -36,11 +36,13 @@ for dir in ${raw}/sub-*; do
 done
 
 # Modelling
-
 mkdir ${lesions}/model
 
-# Create an N-map
-
+# Create an N-mapmrmath \
+mrmath \
+${lesions}/masks/mni/*/*lesion.nii.gz \
+sum \
+${lesions}/model/n-map.nii.gz
 
 
 
