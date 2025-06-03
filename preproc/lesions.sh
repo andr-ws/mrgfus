@@ -35,14 +35,40 @@ for dir in ${raw}/sub-*; do
     --interpolation NearestNeighbor
 done
 
-# Modelling
-mkdir ${lesions}/model
+# Modelling (only lh lesions)
 
-# Create an N-mapmrmath \
+mkdir ${lesions}/model
+lh_subs=${der}/study_files/lh_subs.txt
+
+mkdir ${lesions}/model/tmp
+while read sub; do
+  ln -s ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
+  ${lesions}/model/tmp/
+done < ${lh_subs}
+
+# Create a 4D lesion input
+mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/4d_lesions.nii.gz
+
+# Create an N-map \
 mrmath \
-${lesions}/masks/mni/*/*lesion.nii.gz \
+${lesions}/model/tmp/*lesion.nii.gz \
 sum \
 ${lesions}/model/n-map.nii.gz
+rm -r ${lesions}/model/tmp
+
+# Create a study mask (threshold lowest 10%, binarise, NaN)
+fslmaths ${lesions}/model/n-map.nii.gz -thrP 10 -bin ${lesions}/model/n-map_thr.nii.gz
+# Convert 0 to NaN with MRtrix
+mrconvert ${lesions}/model/n-map_thr.nii.gz - | mrcalc - 1 nan -if ${lesions}/model/n-map_thr.nii.gz -force
+
+randomise \
+  -i <4D_input_data> \
+  -o <output_rootname> \
+  -d design.mat \
+  -t design.con \
+  -m <mask_image> \
+  -n 500 -D -T
+
 
 
 
