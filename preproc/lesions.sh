@@ -35,10 +35,24 @@ for dir in ${raw}/sub-*; do
     --interpolation NearestNeighbor
 done
 
-# Modelling (only lh lesions)
+# Flip rh lesions to lh
+
+
+
+
+# Modelling
 
 mkdir ${lesions}/model
 lh_subs=${der}/study_files/lh_subs.txt
+
+
+rh_subs=${der}/study_files/rh_subs.txt
+
+# Need to execute the nlin flipping of just the subjects here
+
+
+
+
 
 mkdir ${lesions}/model/tmp
 while read sub; do
