@@ -345,17 +345,14 @@ antsRegistrationSyN.sh \
   -d 3 \
   -f ${MNI_T2} \
   -m ${fba}/template/study_template/wmfod_template.nii.gz \
-  -x "
   -o ${fba}/template/study_template/wmfod_template-MNI_ \
-  -n 10
-
-
+  -n 12
 
 # To integrate: percent change images for postop. timepoints
-fdcdir=/Volumes/LA_4TB/datasetsmrgfus/derivatives/fba/template/fdc_smooth
+fdcdir=${fba}/template/study_template/metrics/fdc_smooth
 
 # Create output directories
-mkdir -p ${fdcdir}/pc/6m ${fdcdir}/pc/12m
+mkdir -p ${analysis}/group_fba/6m_pc${analysis}/group_fba/12_pc
 
 # Loop through all ses-01 (baseline) files
 for pre in ${fdcdir}/sub-*_ses-01.mif; do
