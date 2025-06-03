@@ -3,6 +3,7 @@
 # Lesions manually defined
 raw=/Volumes/LA_4TB/datasets/mrgfus/rawdata
 der=/Volumes/LA_4TB/datasets/mrgfus/derivatives
+sf=${der}/study_files
 lesions=${der}/lesions
 MNI=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
 
@@ -44,6 +45,8 @@ matlab \
 # Modelling
 
 mkdir ${lesions}/model
+lh_subs=${sf}/lh_subs.txt
+rh_subs=${sf}/rh_subs.txt
 
 mkdir ${lesions}/model/tmp
 while read sub; do
@@ -56,31 +59,27 @@ while read sub; do
   ${lesions}/model/tmp/${sub}_lesion.nii.gz
 done < ${rh_subs}
 
+# Generate files
 # Create a 4D lesion input
 mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/all_4d_lesions.nii.gz
 # Create an N-map \
 mrmath ${lesions}/model/tmp/*lesion.nii.gz sum ${lesions}/model/all_n-map.nii.gz
 
-# For the immediate model (one subject missing score)
+# For the immediate model (one subject missing score, remove and repeat)
 rm ${lesions}/model/tmp/sub-027_lesion.nii.gz
-
-# Create a 4D lesion input for immediate
 mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/imm_4d_lesions.nii.gz
-# Create an N-map \
 mrmath ${lesions}/model/tmp/*lesion.nii.gz sum ${lesions}/model/imm_n-map.nii.gz
 
 # Tidy up tmp directory
 rm -r ${lesions}/model/tmp
 
+# Create study masks (remove lowest 10%, binarise and NaN 0)
 for tp in imm all; do
-  # Create study masks (threshold lowest 10%, binarise, NaN)
   fslmaths ${lesions}/model/${tp}_n-map.nii.gz -thrP 10 -bin ${lesions}/model/${tp}_n-map_thr.nii.gz
-  # Convert 0 to NaN with MRtrix
   mrconvert ${lesions}/model/${tp}_n-map_thr.nii.gz - | mrcalc - 1 nan -if ${lesions}/model/${tp}_n-map_thr.nii.gz -force
 done
 
-
-# TO-DO:
+# Perform sweetspot analysis
 randomise \
   -i ${lesions}/model/4d_lesions.nii.gz \
   -o ${lesions}/model/randomise \
