@@ -348,13 +348,16 @@ antsRegistrationSyN.sh \
   -o ${fba}/template/study_template/wmfod_template-MNI_ \
   -n 12
 
-# To integrate: percent change images for postop. timepoints
+# Group analyses:
+
+# Percent change images for postop. timepoints
 fdcdir=${fba}/template/study_template/metrics/fdc_smooth
 
 # Create output directories
-mkdir -p ${analysis}/group_fba/6m_pc${analysis}/group_fba/12_pc
+mkdir -p ${analysis}/group_fba/6m_pc \
+${analysis}/group_fba/12_pc
 
-# Loop through all ses-01 (baseline) files
+# Loop through ses-01 files
 for pre in ${fdcdir}/sub-*_ses-01.mif; do
   # Extract subject ID (e.g., sub-001)
   sub=$(basename $pre | cut -d '_' -f 1)
@@ -364,8 +367,8 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   fdc_12m=${fdcdir}/${sub}_ses-03.mif
 
   # Output filenames
-  pc_6m=${fdcdir}/pc/6m/${sub}.mif
-  pc_12m=${fdcdir}/pc/12m/${sub}.mif
+  pc_6m=${analysis}/group_fba/6m_pc/${sub}.mif
+  pc_12m=${analysis}/group_fba/12m_pc/${sub}.mif
 
   # Compute 6-month percent change if ses-02 exists
   if [ -f $fdc_6m ]; then
@@ -382,8 +385,13 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   else
     echo "Skipping 12m for ${sub} (missing ses-03)"
   fi
-
 done
+
+fixelcfestats ... 
+
+
+
+
 
 # CREATE A .CSV FILE TO STORE THE MEAN VALUE PER SESSION
 # IF SUBJECT DOESN'T HAVE THE SESSION, ENTRY = NA
