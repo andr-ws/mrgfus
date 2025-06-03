@@ -220,6 +220,7 @@ ${fba}/template/study_template/wmfod_template.mif \
 ${fba}/template/study_template/fixel_mask_08
 
 # Segment FOD images to estimate fixels and their AFD
+mkdir ${fba}/template/study_template/metrics
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
   for ses in ses-01 ses-02 ses-03; do
@@ -249,45 +250,47 @@ for dir in ${fba}/data/sub-*; do
     fixelcorrespondence \
     ${dir}/${ses}/fixels/${sub}_fixel-template/${ses}_fd.mif \
     ${fba}/template/study_template/fixel_mask_08 \
-    ${fba}/template/study_template/fd \
+    ${fba}/template/study_template/metrics/fd \
     ${sub}_${ses}.mif
 
     # Compute FC metric
     warp2metric \
     ${dir}/${ses}/fod/${sub}-template_warp.mif \
     -fc ${fba}/template/study_template/fixel_mask_08 \
-    ${fba}/template/study_template/fc \
+    ${fba}/template/study_template/metrics/fc \
     ${sub}_${ses}.mif \
     -force
   done
 done
 
 # Copy files for, and compute log-fc
-mkdir ${fba}/template/study_template/log_fc
-cp ${fba}/template/study_template/fc/index.mif ${fba}/template/study_template/fc/directions.mif \
-${fba}/template/study_template/log_fc
+mkdir ${fba}/template/study_template/metrics/log_fc
+cp ${fba}/template/study_template/metrics/fc/index.mif ${fba}/template/study_template/metrics/fc/directions.mif \
+${fba}/template/study_template/metrics/log_fc
 
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/study_template/fc/${sub}_${ses}.mif \
-     -log ${fba}/template/study_template/log_fc/${sub}_${ses}.mif \
+     ${fba}/template/study_template/metrics/fc/${sub}_${ses}.mif \
+     -log ${fba}/template/study_template/metrics/log_fc/${sub}_${ses}.mif \
      -force
    done
 done
 
 # Copy files for, and compute fdc
-mkdir ${fba}/template/study_template/fdc
-cp ${fba}/template/study_template/fc/index.mif ${fba}/template/study_template/fc/directions.mif \
-${fba}/template/study_template/fdc
+mkdir ${fba}/template/study_template/metrics/fdc
+cp ${fba}/template/study_template/metrics/fc/index.mif \
+${fba}/template/study_template/metrics/fc/directions.mif \
+${fba}/template/study_template/metrics/fdc
 
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/study_template/fd/${sub}_${ses}.mif ${fba}/template/study_template/fc/${sub}_${ses}.mif -mult \
-     ${fba}/template/study_template/fdc/${sub}_${ses}.mif \
+     ${fba}/template/study_template/metrics/fd/${sub}_${ses}.mif \
+     ${fba}/template/study_template/metrics/fc/${sub}_${ses}.mif -mult \
+     ${fba}/template/study_template/metrics/fdc/${sub}_${ses}.mif \
      -force
    done
 done
@@ -321,11 +324,30 @@ ${fba}/template/study_template/matrix/ \
 # Smooth metric data using the fixel-fixel connectivity matrix
 for metric in fd log_fc fdc; do
 fixelfilter \
-${fba}/template/study_template/${metric} \
-smooth ${fba}/template/study_template/${metric}_smooth \
+${fba}/template/study_template/metrics/${metric} \
+smooth ${fba}/template/study_template/metrics/${metric}_smooth \
 -matrix ${fba}/template/study_template/matrix/
 done
 
+# Generate wmfod<->MNI (0.5mm) xfm
+mrconvert \
+${fba}/template/study_template/wmfod_template.mif \
+-coord 3 0 -axes 0,1,2 \
+${fba}/template/study_template/wmfod_template.nii.gz
+
+mri_synthstrip \
+-i ${fba}/template/study_template/wmfod_template.nii.gz \
+-o ${fba}/template/study_template/wmfod_template_brain.nii.gz \
+-m ${fba}/template/study_template/wmfod_template_brain_mask.nii.gz
+
+MNI_T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii
+antsRegistrationSyN.sh \
+  -d 3 \
+  -f ${MNI_T2} \
+  -m ${fba}/template/study_template/wmfod_template.nii.gz \
+  -x "
+  -o ${fba}/template/study_template/wmfod_template-MNI_ \
+  -n 10
 
 
 
