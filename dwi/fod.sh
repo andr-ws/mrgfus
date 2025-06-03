@@ -415,11 +415,14 @@ fixelcfestats \
 
 # Store the FDC value of the sweetspot per session (else NA)
 
-# BUT NEED TO FIRST FLIP THE SWEETSPOT ONTO OTHER HEMI AND THEN WORK OUT WAY OF INDEXING THE TARGETED HEMI TO MULTIPLY BY WHICH HEMI SWEETSPOT
+# WORK OUT WAY OF INDEXING THE TARGETED HEMI TO MULTIPLY BY WHICH HEMI SWEETSPOT
+# BUT ALSO NEED THEM ACCURATELY IN WMFOD SPACE
+# TRY AND GET ON CLUSTER TO USE SYNTHMORPH
 
 echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/lh.csv 
 echo "sub-id,ses-01,ses-02,ses-03" > ${fba}/analysis/sweetspot/rh.csv
-sweetspot=${fba}/analysis/sweetspot/sweetspot.nii.gz
+lh_sweetspot=${fba}/analysis/sweetspot/lh_sweetspot.nii.gz
+rh_sweetspot=${fba}/analysis/sweetspot/rh_sweetspot.nii.gz # nlin flipped
 
 # Loop through each subject
 for dir in ${fba}/data/sub-*; do
