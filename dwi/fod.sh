@@ -415,7 +415,6 @@ fixelcfestats \
 
 # Store the FDC value of the sweetspot per session (else NA)
 
-# WORK OUT WAY OF INDEXING THE TARGETED HEMI TO MULTIPLY BY WHICH HEMI SWEETSPOT
 # BUT ALSO NEED THEM ACCURATELY IN WMFOD SPACE
 # TRY AND GET ON CLUSTER TO USE SYNTHMORPH
 
@@ -428,7 +427,7 @@ mkdir -p ${fba}/analysis/sweetspot/fdc_maps
 while read -r sub hemi; do
   echo "Processing $sub"
   # extract entry in 2nd column of ${hemis} to determine which sweetspot to use
-  sweetspot_hemi="${fba}/analysis/sweetspot/${hemi}_sweetspot.nii.gz"
+  sweetspot_hemi="${fba}/analysis/sweetspot/${hemi}_sweetspot.nii.gz" # NEED TO GET THESE IN WMFOD SPACE!!
 
   # Initialize CSV line
   line="$sub"
@@ -451,13 +450,11 @@ while read -r sub hemi; do
     fi
 
     # Append value to line
-    line=",$line,$value"
+    line="${line},${value}"
   done
   # Append full row to CSV
   echo "$line" >> "$csv_out"
 done < ${hemis}
-
-
 
 
 # Wander if FDC maps in randomise may be useful?
