@@ -8,79 +8,101 @@ base=~/imaging/datasets/mrgfus
 raw=${base}/rawdata
 dwi=${base}/derivatives/data/dwi
 fba=${base}/derivatives/fba
+sf=${base}/derivatives/study_files
 
-for dir in ${dwi}/sub-*; do
-  sub=$(basename ${dir})
+hemis=${sf}/fba/hemis.txt # sub-id hemi
+while read -r sub hemi; do
 
   for ses in ses-01 ses-02 ses-03; do
-    if [ ! -d ${dir}/${ses}/eddy ]; then
+    eddy=${dwi}/${sub}/${ses}/eddy
+    fod=${fba}/data/${sub}/${ses}/fod
+    
+    if [ ! -d ${eddy} ]; then
       echo "Skipping subject ${sub} ${ses} - this directory is not found!"
       continue
     fi
   
     echo "Processing subject ${sub} for session ${ses}"
+    mkdir -p ${fod}
+
+    # Need to check if here if a subject is rhetorical targeted
+    if [[ "$hemi" == "lh" ]]; then
     
-    mkdir -p ${fba}/data/${sub}/${ses}/fod
-  
-    # Convert eddy data
-    mrconvert \
-      ${dir}/${ses}/eddy/${sub}_dwi_edc.nii.gz \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_dwi.mif \
-      -fslgrad \
-      ${dir}/${ses}/eddy/${sub}_dwi_edc.eddy_rotated_bvecs \
-      ${dir}/${ses}/${sub}_${ses}_acq-dwi.bval \
+      # Flip x-axis
+      mrtransform \
+        ${eddy}/${sub}_dwi_edc.nii.gz \
+        ${fod}/tmp_${sub}_dwi.mif \
+        -flip 0 \
+        -fslgrad \
+        ${eddy}/${sub}_dwi_edc.eddy_rotated_bvecs \
+        ${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi.bval
+    elif [[ "$hemi" == "rh" ]]; then
+    
+      mrconvert \
+        ${eddy}/${sub}_dwi_edc.nii.gz \
+        ${fod}/tmp_${sub}_dwi.mif \
+        -fslgrad \
+        ${eddy}/${sub}_dwi_edc.eddy_rotated_bvecs \
+        ${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi.bval
+    else
+      echo "ERROR: unexpected value for hemi: '$hemi'" >&2
+      exit 1
+    fi
     
     # Bias correct
     dwibiascorrect \
       ants \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_dwi.mif \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_dwi_dn.mif
+      ${fod}/tmp_${sub}_dwi.mif \
+      ${fod}/fod/tmp_${sub}_dwi_dn.mif
 
     # Compute average tissue-response function
     dwi2response \
       dhollander \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_dwi_dn.mif \
-      ${fba}/data/${sub}/${ses}/fod/response_wm.txt \
-      ${fba}/data/${sub}/${ses}/fod/response_gm.txt \
-      ${fba}/data/${sub}/${ses}/fod/response_csf.txt
+      ${fod}/fod/tmp_${sub}_dwi_dn.mif \
+      ${fod}/fod/response_wm.txt \
+      ${fod}/${ses}/fod/response_gm.txt \
+      ${fod}/fod/response_csf.txt
 
     # Regrid to voxel size 1.25
     mrgrid \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_dwi_dn.mif \
+      ${fod}/tmp_${sub}_dwi_dn.mif \
       regrid -vox 1.25 \
-      ${fba}/data/${sub}/${ses}/fod/${sub}_dwi_us.mif
+      ${fod}/${sub}_dwi_us.mif
 
     # Extract upsampled b0
     dwiextract \
-      ${fba}/data/${sub}/${ses}/fod/${sub}_dwi_us.mif \
-      - -bzero | mrmath - mean ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_us.mif \
+      ${fod}/${sub}_dwi_us.mif \
+      - -bzero | mrmath - mean ${fod}/tmp_${sub}_b0_us.mif \
       -axis 3
 
     mrconvert \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_us.mif \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_us.nii.gz
+      ${fod}/tmp_${sub}_b0_us.mif \
+      ${fod}/tmp_${sub}_b0_us.nii.gz
 
     # Brain extract and create mask
     mri_synthstrip \
-      -i ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_us.nii.gz \
-      -o ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_brain_us.nii.gz \
-      -m ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_brain_mask_us.nii.gz
+      -i ${fod}/tmp_${sub}_b0_us.nii.gz \
+      -o ${fod}/tmp_${sub}_b0_brain_us.nii.gz \
+      -m ${fod}/tmp_${sub}_b0_brain_mask_us.nii.gz
 
     # Convert brain mask to mif format
     mrconvert \
-      ${fba}/data/${sub}/${ses}/fod/tmp_${sub}_b0_brain_mask_us.nii.gz \
-      ${fba}/data/${sub}/${ses}/fod/${sub}_b0_brain_mask_us.mif
+      ${fod}/tmp_${sub}_b0_brain_mask_us.nii.gz \
+      ${fod}/${sub}_b0_brain_mask_us.mif
 
-    rm ${fba}/data/${sub}/${ses}/fod/tmp*
+    # Clean up
+    rm ${fod}/tmp*
       
   done
-done
+done < ${hemis}
 
 # Create group tissue response functions
 mkdir -p ${fba}/rfuncs
 
 for tissue in wm gm csf; do
-  responsemean ${fba}/*/*/*/fod/response_${tissue}.txt ${fba}/rfuncs/group_response_${tissue}.txt
+  responsemean \
+    ${fba}/*/*/*/fod/response_${tissue}.txt \
+    ${fba}/rfuncs/group_response_${tissue}.txt
 done
 
 # Create individual tissue response functions
@@ -88,24 +110,31 @@ for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
   for ses in ses-01 ses-02 ses-03; do
+    fod=${dir}/${ses}/fod
+    
     ss3t_csd_beta1 \
-      ${dir}/${ses}/fod/${sub}_dwi_us.mif \
+      ${fod}/${sub}_dwi_us.mif \
       ${fba}/rfuncs/group_response_wm.txt \
-      ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif \
+      ${fod}/tmp_${sub}_wmfod.mif \
       ${fba}/rfuncs/group_response_gm.txt \
-      ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif \
+      ${fod}/tmp_${sub}_gmfod.mif \
       ${fba}/rfuncs/group_response_csf.txt \
-      ${dir}/${ses}/fod/tmp_${sub}_csffod.mif \
-      -mask ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif
+      ${fod}/tmp_${sub}_csffod.mif \
+      -mask ${fod}/${sub}_b0_brain_mask_us.mif
 
     mtnormalise \
-      ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif ${dir}/${ses}/fod/${sub}_wmfod.mif \
-      ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif ${dir}/${ses}/fod/${sub}_gmfod.mif \
-      ${dir}/${ses}/fod/tmp_${sub}_csffod.mif ${dir}/${ses}/fod/${sub}_csffod.mif \
-      -mask ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif
+      ${fod}/tmp_${sub}_wmfod.mif ${fod}/${sub}_wmfod.mif \
+      ${fod}/tmp_${sub}_gmfod.mif ${fod}/${sub}_gmfod.mif \
+      ${fod}/tmp_${sub}_csffod.mif ${fod}/${sub}_csffod.mif \
+      -mask ${fod}/${sub}_b0_brain_mask_us.mif
 
-    rm ${dir}/${ses}/fod/${sub}_dwi_us.mif
-    rm ${dir}/${ses}/fod/tmp_${sub}_wmfod.mif ${dir}/${ses}/fod/tmp_${sub}_gmfod.mif ${dir}/${ses}/fod/tmp_${sub}_csffod.mif 
+    # Clean up
+    rm \
+      ${fod}/${sub}_dwi_us.mif \
+      ${fod}/tmp_${sub}_wmfod.mif \
+      ${fod}/tmp_${sub}_gmfod.mif \
+      ${fod}/tmp_${sub}_csffod.mif
+
   done
 done
 
@@ -119,15 +148,17 @@ done
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
-  mkdir -p ${fba}/template/intra-temps/${sub}/fods
-  mkdir -p ${fba}/template/intra-temps/${sub}/masks
+  itemp=${fba}/template/itemps/${sub}
+  mkdir -p ${itemp}/fods ${itemp}/masks
 
   # Loop through possible sessions
   for ses in ses-01 ses-02 ses-03; do
-    fod_in=${fba}/data/${sub}/${ses}/fod/${sub}_wmfod.mif
-    fod_out=${fba}/template/intra-temps/${sub}/fods/${sub}_${ses}.mif
-    mask_in=${fba}/data/${sub}/${ses}/fod/${sub}_b0_brain_mask_us.mif
-    mask_out=${fba}/template/intra-temps/${sub}/masks/${sub}_${ses}.mif
+    fod=${fba}/data/${sub}/${ses}/fod
+    
+    fod_in=${fod}/${sub}_wmfod.mif
+    fod_out=${itemp}/fods/${sub}_${ses}.mif
+    mask_in=${fod}/${sub}_b0_brain_mask_us.mif
+    mask_out=${itemp}/masks/${sub}_${ses}.mif
 
     if [ -f ${fod_in} ]; then
       echo "  Found FOD for ${ses}, linking to intra-temp folder."
@@ -140,12 +171,15 @@ for dir in ${fba}/data/sub-*; do
 
   # Run population_template with rigid registration
   population_template \
-    ${fba}/template/intra-temps/${sub}/fods/ \
-    ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
-    -mask_dir ${fba}/template/intra-temps/${sub}/masks/ \
+    ${itemp}/fods/ \
+    ${itemp}/fods/${sub}_itemp.mif \
+    -mask_dir ${itemp}/masks/ \
     -voxel_size 1.25 \
     -type rigid \
-    -linear_transformations_dir ${fba}/template/intra-temps/${sub}/xfms
+    -linear_transformations_dir ${itemp}/xfms
+
+  # Rename for clarity
+  mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt 
 
   echo "Done with subject: ${sub}"
   echo "----------------------------"
@@ -153,205 +187,218 @@ for dir in ${fba}/data/sub-*; do
 done
 
 # Now generate the study template
-template=${der}/study_files/fba/template.txt
+template=${sf}/fba/template.txt
+mkdir -p ${fba}/template/study_template/fods
+
 while read -r sub; do
-  mkdir -p ${fba}/template/study_template/fods
-  ln -sf ${fba}/template/intra-temps/${sub}/${sub}_avg.mif ${fba}/template/study_template/fods/
+  ln -s \
+    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif \
+    ${fba}/template/study_template/fods/
 done < $template
+
+wmfod=${fba}/template/study_template/wmfod
+mkdir -p ${wmfod}
 
 population_template \
   ${fba}/template/study_template/fods/ \
-  ${fba}/template/study_template/wmfod_template.mif \
+  ${wmfod}/wmfod_template.mif \
   -voxel_size 1.25
-  
-# Population_template by default is: rigid_affine_nonlinear
-# Want to use this on all subjects for consistency
-
-mkdir -p \
-${fba}/template/study_template/intra-template_xfms
 
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
+  itemp=${fba}/template/itemps
+  
   mrregister \
-  ${fba}/template/intra-temps/${sub}/${sub}_avg.mif \
-  -type rigid_affine_nonlinear \
-  ${fba}/template/study_template/wmfod_template.mif \
-  -nl_warp \
-  ${fba}/template/study_template/intra-template_xfms/${sub}_intra-temp_warp.mif \
-  ${fba}/template/study_template/intra-template_xfms/tmp_${sub}_warp.mif # remove these
+    ${itemp}/${sub}/fods/${sub}_itemp.mif \
+    -type rigid_affine_nonlinear \
+    ${wmfod}/wmfod_template.mif \
+    -nl_warp \ # rigid_affine_nonlinear
+    ${itemp}/${sub}/xfms/${sub}_itemp-temp_warp.mif \
+    ${itemp}/${sub}/xfms/tmp_${sub}.mif # remove these
 
-  rm ${fba}/template/study_template/intra-template_xfms/tmp_${sub}_warp.mif
+  rm ${itemp}/${sub}/xfms/tmp_${sub}.mif
 
   # Now register and transform all native timepoints
   # Use the affine to intra-pop and the warp of intra-pop to group
 
   for ses in ses-01 ses-02 ses-03; do
 
-  # Compose for ease and later when need single file
-  transformcompose \
-  ${fba}/template/intra-temps/${sub}/xfms/${sub}_${ses}.txt \
-  ${fba}/template/study_template/intra-template_xfms/${sub}_intra-temp_warp.mif \
-  ${dir}/${ses}/fod/${sub}-template_warp.mif
+    fod=${dir}/${ses}/fod
 
-  # Apply to the mask
-  mrtransform \
-    ${dir}/${ses}/fod/${sub}_b0_brain_mask_us.mif \
-    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    -interp nearest -datatype bit \
-    ${dir}/${ses}/fod/${sub}_b0_mask_us-template.mif \
-    -template ${fba}/template/study_template/wmfod_template.mif
+    # Compose for ease and later when need single file
+    transformcompose \
+      ${itemp}/${sub}/xfms/${sub}_${ses}_itemp_rigid.txt \
+      ${itemp}/${sub}/xfms/${sub}_itemp-temp_warp.mif \
+      ${fod}/${sub}-template_warp.mif
 
+    # Apply to the mask
+    mrtransform \
+      ${fod}/${sub}_b0_brain_mask_us.mif \
+      -warp ${fod}/${sub}-template_warp.mif \
+      -interp nearest -datatype bit \
+      ${fod}/${sub}_b0_mask_us-template.mif \
+      -template ${wmfod}/wmfod_template.mif
   done
 done
 
 # Compute wmfod template mask
 mrmath \
-${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
-min \
-${fba}/template/study_template/template_mask.mif \
--datatype bit
+  ${fba}/data/*/*/fod/*_b0_mask_us-template.mif \
+  min \
+  ${wmfod}/template_mask.mif \
+  -datatype bit
 
 # Define group white matter fixel mask and estimate fixel metrics for each patient
 fod2fixel
--mask ${fba}/template/study_template/template_mask.mif \
--fmls_peak_value 0.08 \
-${fba}/template/study_template/wmfod_template.mif \
-${fba}/template/study_template/fixel_mask_08
+  -mask ${wmfod}/template_mask.mif \
+  -fmls_peak_value 0.08 \
+  ${wmfod}/wmfod_template.mif \
+  ${fba}/template/study_template/fixel_mask_08
 
 # Segment FOD images to estimate fixels and their AFD
-mkdir ${fba}/template/study_template/metrics
+unsmoothed=${fba}/template/study_template/metrics/unsmoothed
+mkdir -p ${unsmoothed}
+
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
   for ses in ses-01 ses-02 ses-03; do
 
-    mkdir -p ${dir}/${ses}/fixels
+    fod=${dir}/${ses}/fod
+    fix=${dir}/${ses}/fixels
 
-    mrtransform ${dir}/${ses}/fod/${sub}_wmfod.mif \
-    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    --reorient_fod no \
-    ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif
+    mkdir -p ${fix}
+
+    mrtransform \
+      ${fod}/${sub}_wmfod.mif \
+      -warp ${fod}/${sub}-template_warp.mif \
+      --reorient_fod no \
+      ${fod}/${sub}_wmfod_noreo.mif
     
     fod2fixel \
-    -mask ${fba}/template/study_template/template_mask.mif \
-    ${dir}/${ses}/fod/${sub}_wmfod_noreo.mif \
-    ${dir}/${ses}/fixels/${sub}_fixel-template_noreo \
-    -afd ${ses}_fd.mif \
-    -force
+      -mask ${wmfod}/template_mask.mif \
+      ${fod}/${sub}_wmfod_noreo.mif \
+      ${fix}/fixel-template_noreo \
+      -afd ${sub}_fd.mif
    
     # Reorient fixels
     fixelreorient \
-    ${dir}/${ses}/fixels/${sub}_fixel-template_noreo \
-    ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    ${dir}/${ses}/fixels/${sub}_fixel-template \
-    -force
+      ${fix}/fixel-template_noreo \
+      ${fod}/${sub}-template_warp.mif \
+      ${dir}/${ses}/fixels/fixel-template
 
     # Assign subjects fixels to template fixels
     fixelcorrespondence \
-    ${dir}/${ses}/fixels/${sub}_fixel-template/${ses}_fd.mif \
-    ${fba}/template/study_template/fixel_mask_08 \
-    ${fba}/template/study_template/metrics/fd \
-    ${sub}_${ses}.mif
+      ${fix}/fixel-template/${sub}_fd.mif \
+      ${fba}/template/study_template/fixel_mask_08 \
+      ${unsmoothed}/fd \
+      ${sub}_${ses}.mif
 
     # Compute FC metric
     warp2metric \
-    ${dir}/${ses}/fod/${sub}-template_warp.mif \
-    -fc ${fba}/template/study_template/fixel_mask_08 \
-    ${fba}/template/study_template/metrics/fc \
-    ${sub}_${ses}.mif \
-    -force
+      ${fod}/${sub}-template_warp.mif \
+      -fc ${fba}/template/study_template/fixel_mask_08 \
+      ${unsmoothed}/fc \
+      ${sub}_${ses}.mif
   done
 done
 
 # Copy files for, and compute log-fc
-mkdir ${fba}/template/study_template/metrics/log_fc
-cp ${fba}/template/study_template/metrics/fc/index.mif ${fba}/template/study_template/metrics/fc/directions.mif \
-${fba}/template/study_template/metrics/log_fc
+mkdir ${unsmoothed}/log_fc
+ln -s \
+  ${unsmoothed}/fc/index.mif \
+  ${unsmoothed}/fc/directions.mif \
+  ${unsmoothed}/log_fc
 
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/study_template/metrics/fc/${sub}_${ses}.mif \
-     -log ${fba}/template/study_template/metrics/log_fc/${sub}_${ses}.mif \
-     -force
+       ${unsmoothed}/fc/${sub}_${ses}.mif \
+       -log ${unsmoothed}/log_fc/${sub}_${ses}.mif
    done
 done
 
 # Copy files for, and compute fdc
-mkdir ${fba}/template/study_template/metrics/fdc
-cp ${fba}/template/study_template/metrics/fc/index.mif \
-${fba}/template/study_template/metrics/fc/directions.mif \
-${fba}/template/study_template/metrics/fdc
+mkdir ${unsmoothed}/fdc
+ln -s \
+  ${unsmoothed}/fc/index.mif \
+  ${unsmoothed}/fc/directions.mif \
+  ${unsmoothed}/fdc
 
 for dir in ${fba}/data/sub-*; do
    sub=$(basename ${dir})
    for ses in ses-01 ses-02 ses-03; do
      mrcalc \
-     ${fba}/template/study_template/metrics/fd/${sub}_${ses}.mif \
-     ${fba}/template/study_template/metrics/fc/${sub}_${ses}.mif -mult \
-     ${fba}/template/study_template/metrics/fdc/${sub}_${ses}.mif \
-     -force
+       ${unsmoothed}/fd/${sub}_${ses}.mif \
+       ${unsmoothed}/fc/${sub}_${ses}.mif -mult \
+       ${unsmoothed}/fdc/${sub}_${ses}.mif
    done
 done
 
+tracts=${fba}/template/study_template/tracts
+mkdir -p ${tracts}
+
 # Generate tractogram
 tckgen \
--angle 22.5 \
--maxlen 250 \
--minlen 10 \
--power 1.0 \
-${fba}/template/study_template/wmfod_template.mif \
--seed_image ${fba}/template/study_template/template_mask.mif \
--select 20000000 \
--cutoff 0.08  \ # matched to the fod2fixel threshold
-${fba}/template/study_template/tractogram_20mil.tck
+  -angle 22.5 \
+  -maxlen 250 \
+  -minlen 10 \
+  -power 1.0 \
+  ${wmfod}/wmfod_template.mif \
+  -seed_image ${wmfod}/template_mask.mif \
+  -select 20000000 \
+  -cutoff 0.08  \ # matched to the fod2fixel threshold
+  ${tracts}/tracts-20m.tck
 
 # SIFT tractogram
 tcksift \
-${fba}/template/study_template/tractogram_20mil.tck \
-${fba}/template/study_template/wmfod_template.mif \
-${fba}/template/study_template/tractogram_2mil_SIFT.tck \
--term_number 2000000
+  ${tracts}/tracts-20m.tck \
+  ${wmfod}/wmfod_template.mif \
+  ${tracts}/tracts-2m.tck \
+  -term_number 2000000
 
 # Compute fixel-fixel connectivity matrix
 fixelconnectivity \
-${fba}/template/study_template/fixel_mask_08/ \
-${fba}/template/study_template/tractogram_2mil_SIFT.tck \
-${fba}/template/study_template/matrix/ \
--force
+  ${fba}/template/study_template/fixel_mask_08/ \
+  ${tracts}/tracts-2m.tck \
+  ${fba}/template/study_template/matrix/
 
 # Smooth metric data using the fixel-fixel connectivity matrix
+smoothed=${fba}/template/study_template/metrics/smoothed
 for metric in fd log_fc fdc; do
-fixelfilter \
-${fba}/template/study_template/metrics/${metric} \
-smooth ${fba}/template/study_template/metrics/${metric}_smooth \
--matrix ${fba}/template/study_template/matrix/
+  mkdir -p ${smoothed}/${metric}
+  
+  fixelfilter \
+    ${unsmoothed}/${metric} \
+    smooth ${smoothed}/${metric} \
+    -matrix ${fba}/template/study_template/matrix/
 done
 
 # Generate wmfod<->MNI (0.5mm) xfm
-mrconvert \
-${fba}/template/study_template/wmfod_template.mif \
--coord 3 0 -axes 0,1,2 \
-${fba}/template/study_template/wmfod_template.nii.gz
+# USE SYNTHMORPH HERE>>
+#mrconvert \
+#${fba}/template/study_template/wmfod_template.mif \
+#-coord 3 0 -axes 0,1,2 \
+#${fba}/template/study_template/wmfod_template.nii.gz
 
-mri_synthstrip \
--i ${fba}/template/study_template/wmfod_template.nii.gz \
--o ${fba}/template/study_template/wmfod_template_brain.nii.gz \
--m ${fba}/template/study_template/wmfod_template_brain_mask.nii.gz
+#mri_synthstrip \
+#-i ${fba}/template/study_template/wmfod_template.nii.gz \
+#-o ${fba}/template/study_template/wmfod_template_brain.nii.gz \
+#-m ${fba}/template/study_template/wmfod_template_brain_mask.nii.gz
 
-MNI_T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii
-antsRegistrationSyN.sh \
-  -d 3 \
-  -f ${MNI_T2} \
-  -m ${fba}/template/study_template/wmfod_template.nii.gz \
-  -o ${fba}/template/study_template/wmfod_template-MNI_ \
-  -n 12
+#MNI_T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii
+#antsRegistrationSyN.sh \
+#  -f ${MNI_T2} \
+#  -d 3 \
+#  -m ${fba}/template/study_template/wmfod_template.nii.gz \
+#  -n 12
+#  -o ${fba}/template/study_template/wmfod_template-MNI_ \
 
 # Group analyses:
 
 # Percent change images for postop. timepoints
-fdcdir=${fba}/template/study_template/metrics/fdc_smooth
+fdcdir=${fba}/template/study_template/metrics/smoothed/fdc
 analysis=${fba}/analysis
 # Create output directories
 mkdir -p ${analysis}/group_fba/6m_pc \
