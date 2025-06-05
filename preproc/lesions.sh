@@ -4,7 +4,8 @@
 # non-linearly flips those on the right hemisphere (to the left side), 
 # performs statistical mapping and also warps the sweetspot into wmfod space.
 
-Lesions manually defined
+# Note, this requires all lesions to already be manually defined...
+
 raw=/Volumes/LA_4TB/datasets/mrgfus/rawdata
 der=/Volumes/LA_4TB/datasets/mrgfus/derivatives
 sf=${der}/study_files
