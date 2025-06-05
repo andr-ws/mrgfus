@@ -21,60 +21,48 @@ if [ ! -d "$base" ]; then
 fi
 
 # Define directories
-global="~/imaging/global"
-rawdata="${base}/rawdata"
-derivatives="${base}/derivatives"
+raw=${base}/rawdata
+der=${base}/derivatives
 
-find "${rawdata}" -type d -name 'sub-*' | sort -V | while read -r dir; do
-  # Extract subject-id and create directory
-  sub=$(basename "${dir}")
-
+find ${raw} -type d -name 'sub-*' | sort -V | while read -r dir; do
+  sub=$(basename ${dir})
   for ses in ses-01 ses-02 ses-03; do
-    
-    mkdir -p "${derivatives}/anat/${sub}/${ses}/"
+    pre_anat=${raw}/${sub}/${ses}/anat
+    post_anat=${der}/anat/${sub}/${ses}
+    mkdir -p ${post_anat}
 
+    # Minimal preprocessing
     for modality in T1w FGATIR; do
-      
       echo "Reorienting and cropping ${sub}..."
       fslreorient2std \
-        "${rawdata}/${sub}/${ses}/anat/${sub}_${ses}_acq-${modality}.nii.gz" \
-        "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_reoriented.nii.gz"
+        ${pre_anat}/${sub}_${ses}_acq-${modality}.nii.gz \
+        ${post_anat}/${sub}_${ses}_acq-${modality}_reori.nii.gz
 	
       robustfov \
-        -i "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_reoriented.nii.gz" \
-        -r "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_fov.nii.gz"
+        -i ${post_anat}/${sub}_${ses}_acq-${modality}_reori.nii.gz \
+        -r ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov.nii.gz
 
       echo "Bias-field correcting ${sub}..."
-
       N4BiasFieldCorrection \
   		-d 3 \
-    	-i "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_fov.nii.gz" \
-      -o "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_biasco.nii.gz"
+    	-i ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov.nii.gz \
+      -o ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias.nii.gz
 
  	    echo "Brain extracting ${sub}..."
-  	   
       mri_synthstrip \
-        --image "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_biasco.nii.gz" \
-        --out "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_brain.nii.gz" \
-        --mask "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-${modality}_brain_mask.nii.gz"
- 
+        --image ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias.nii.gz \
+        --out ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias_brain.nii.gz \
+        --mask ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias_brain_mask.nii.gz
     done
 
-    # Co-register FGATIR to T1w
+    # Co-register FGATIR and T1w modalities
     echo "Co-registering FGATIR to T1w for ${sub}..."
-      
     antsRegistrationSyNQuick.sh \
     	-d 3 \
-      -f "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-T1w_brain.nii.gz" \
-      -m "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-FGATIR_brain.nii.gz" \
-      -o "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-FGATIR_space-T1w_"
-
-    mv "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-FGATIR_space-T1w_Warped.nii.gz" "${derivatives}/anat/${sub}/${ses}/${sub}_${ses}_acq-FGATIR_coreg.nii.gz"
+      -f ${post_anat}/${sub}_${ses}_acq-T1w_brain.nii.gz \
+      -m ${post_anat}/${sub}_${ses}_acq-FGATIR_brain.nii.gz \
+      -o ${post_anat}/${sub}_${ses}_acq-FGATIR_space-T1w_
     
     echo "Brain extracting ${sub}..."
-
-    rm -r ${derivatives}/anat/${sub}/${ses}/*warp*
-    rm -r ${derivatives}/anat/${sub}/${ses}/*.mat*
-  
   done
 done
