@@ -98,3 +98,15 @@ randomise \
   -n 10000 \
   -D \
   -T
+
+# Threshold for significance
+...
+
+# Warp from MNI to wmfod space for FBA analysis
+mri_synthmorph \
+  
+
+
+
+
+
