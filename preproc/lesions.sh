@@ -43,41 +43,49 @@ matlab \
   -r "run('/Users/neuro-239/scripts/flip_rh_lesions.m'); exit;"
 
 # Modelling
-
 mkdir ${lesions}/model
-lh_subs=${sf}/lh_subs.txt
-rh_subs=${sf}/rh_subs.txt
+hemis=${sf}/fba/hemis.txt
 
 mkdir ${lesions}/model/tmp
-while read sub; do
-  ln -s ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
-  ${lesions}/model/tmp/
-done < ${lh_subs}
-
-while read sub; do
-  ln -s ${lesions}/masks/mni/${sub}/${sub}_flesion.nii.gz \
-  ${lesions}/model/tmp/${sub}_lesion.nii.gz
-done < ${rh_subs}
+while read -r sub hemi; do
+  if [[ $hemi == lh ]]; then
+    ln -s \
+    ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
+    ${lesions}/model/tmp/
+  elif [[ $hemi == rh ]]; then
+    ln -s \
+    ${lesions}/masks/mni/${sub}/${sub}_flesion.nii.gz \
+    ${lesions}/model/tmp/${sub}_lesion.nii.gz
+  else 
+    echo "Missing hemisphere information for ${sub}"
+  fi
+done < ${hemis}
 
 # Generate files
 # Create a 4D lesion input
-mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/all_4d_lesions.nii.gz
+mrcat \
+  ${lesions}/model/tmp/*_lesion.nii.gz \
+  ${lesions}/model/4d_lesions.nii.gz
 # Create an N-map \
-mrmath ${lesions}/model/tmp/*lesion.nii.gz sum ${lesions}/model/all_n-map.nii.gz
-
-# For the immediate model (one subject missing score, remove and repeat)
-rm ${lesions}/model/tmp/sub-027_lesion.nii.gz
-mrcat ${lesions}/model/tmp/*_lesion.nii.gz ${lesions}/model/imm_4d_lesions.nii.gz
-mrmath ${lesions}/model/tmp/*lesion.nii.gz sum ${lesions}/model/imm_n-map.nii.gz
+mrmath \
+  ${lesions}/model/tmp/*lesion.nii.gz \
+  sum \
+  ${lesions}/model/lesion_n-map.nii.gz
 
 # Tidy up tmp directory
 rm -r ${lesions}/model/tmp
 
 # Create study masks (remove lowest 10%, binarise and NaN 0)
-for tp in imm all; do
-  fslmaths ${lesions}/model/${tp}_n-map.nii.gz -thrP 10 -bin ${lesions}/model/${tp}_n-map_thr.nii.gz
-  mrconvert ${lesions}/model/${tp}_n-map_thr.nii.gz - | mrcalc - 1 nan -if ${lesions}/model/${tp}_n-map_thr.nii.gz -force
-done
+fslmaths \
+  ${lesions}/model/lesion_n-map.nii.gz \
+  -thrP 10 \
+  -bin \
+  ${lesions}/model/lesion_n-map_thr.nii.gz
+
+mrconvert \
+  ${lesions}/model/lesion_n-map_thr.nii.gz \
+  - | mrcalc - 1 nan -if \
+  ${lesions}/model/lesion_n-map_thr.nii.g
 
 # Perform sweetspot analysis
 randomise \
@@ -85,9 +93,7 @@ randomise \
   -o ${lesions}/model/randomise \
   -d design.mat \
   -t design.con \
-  -m ${lesions}/model/n-map_thr.nii.gz \
+  -m ${lesions}/model/lesion_n-map_thr.nii.gz \
   -n 10000 \
   -D \
   -T
-
-
