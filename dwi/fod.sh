@@ -461,36 +461,38 @@ fixelcfestats \
 ###################
 
 # Store the FDC value of the sweetspot per session (else NA)
-
-# BUT ALSO NEED THEM ACCURATELY IN WMFOD SPACE
-# TRY AND GET ON CLUSTER TO USE SYNTHMORPH
-
-csv_out=${fba}/analysis/sweetspot/sweetspot_fdc.csv
-echo "sub-id,ses-01,ses-02,ses-03" > ${csv_out}
-hemis=${fba}/analysis/sweetspot/hemis.txt # contains hemi id (lh/rh)
-mkdir -p ${fba}/analysis/sweetspot/fdc_maps
+mean_fdc_csv=${fba}/analysis/sweetspot/sweetspot_mean-fdc.csv
+echo "sub-id,ses-01,ses-02,ses-03" > ${mean_fdc_csv}
+mkdir -p ${fba}/analysis/sweetspot/mean_fdc_maps
 
 # Loop through each subject
-while read -r sub hemi; do
+while read -r sub; do
   echo "Processing $sub"
-  # extract entry in 2nd column of ${hemis} to determine which sweetspot to use
-  sweetspot_hemi="${fba}/analysis/sweetspot/${hemi}_sweetspot.nii.gz" # NEED TO GET THESE IN WMFOD SPACE!!
+  sweetspot=POINT_2_WMFOD_SS
 
   # Initialize CSV line
   line="$sub"
 
   # Loop through sessions
   for ses in ses-01 ses-02 ses-03; do
-    fdc_mif="${fba}/template/study_template/metrics/fdc_smooth/${sub}_${ses}.mif"
-    fdc_nii="${fba}/data/${sub}/${ses}/fod/${sub}_fdc_map.nii.gz"
-    fdc_masked="${fba}/analysis/sweetspot/fdc_maps/${sub}_${ses}_fdc_masked.nii.gz"
+    fdc_mif=${fba}/template/study_template/metrics/smoothed/fdc/${sub}_${ses}.mif
+    fdc_map=${fba}/analysis/sweetspot/mean_fdc_maps/${sub}_${ses}.nii.gz
 
     # Check if input file exists
     if [[ -f "$fdc_mif" ]]; then
-      fixel2voxel "$fdc_mif" mean "$fdc_nii" # maybe look into complexity
-      
-      fslmaths "$fdc_nii" -mul "$sweetspot_hemi" "$fdc_masked"
-      value=$(fslstats "$fdc_masked" -M)
+      fixel2voxel \
+        ${fdc_mif} \
+        mean \
+        ${fdc_map} \
+        -weighted <UNSURE OF WHAT THIS NEED TO BE> ###########################
+        
+      fslmaths \
+        ${fdc_map} \
+        -mul \
+        ${sweetspot} \
+        ${fdc_map} # overwrite
+        
+      value=$(fslstats "$fdc_map" -M)
     else
       echo "  $ses: Missing FDC file."
       value="NA"
@@ -500,11 +502,7 @@ while read -r sub hemi; do
     line="${line},${value}"
   done
   # Append full row to CSV
-  echo "$line" >> "$csv_out"
+  echo ${line} >> ${mean_fdc_csv}
 done < ${hemis}
-
-
-# Wander if FDC maps in randomise may be useful?
-
 
 # Calculate brain atrophy using a regression-residuals method (TBV~ICV)
