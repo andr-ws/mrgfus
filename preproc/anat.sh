@@ -48,7 +48,7 @@ find ${raw} -type d -name 'sub-*' | sort -V | while read -r dir; do
     	-i ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov.nii.gz \
       -o ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias.nii.gz
 
- 	    echo "Brain extracting ${sub}..."
+ echo "Brain extracting ${sub}..."
       mri_synthstrip \
         --image ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias.nii.gz \
         --out ${post_anat}/${sub}_${ses}_acq-${modality}_reori-fov-bias_brain.nii.gz \
