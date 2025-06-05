@@ -26,7 +26,8 @@ for dir in ${raw}/sub-*; do
   # Warp the lesion masks
   mkdir -p ${lesions}/masks/mni/${sub}
 
-  antsApplyTransforms -d 3 \
+  antsApplyTransforms \
+    -d 3 \
     -i ${lesions}/masks/nii/${sub}_lesion.nii.gz \
     -r ${MNI} \
     -t ${der}/anat/${sub}/ses-01/${sub}_T1w-MNI_05mm_1Warp.nii.gz \
