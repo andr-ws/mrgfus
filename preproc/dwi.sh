@@ -7,13 +7,12 @@
 read -p "Enter the base path of the dataset (e.g., ./path/2/data): " base
 
 # Base directory structure
-raw="${base}/rawdata"
-der="${base}/derivatives"
-dwi="${der}/dwi"
+raw=${base}/rawdata
+der=${base}/derivatives
+dwi=${der}/dwi
 
-find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
-  # extract subject-id and create directory
-	sub=$(basename "${dir}")
+find ${raw} -type d -name 'sub-*' | sort -V | while read -r dir; do
+sub=$(basename ${dir})
 
   for ses in ses-01 ses-02 ses-03; do
   	mkdir -p "${dwi}/${sub}/${ses}"
@@ -65,31 +64,6 @@ find "${raw}" -type d -name 'sub-*' | sort -V | while read -r dir; do
 		mrdegibbs \
 			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-dn_tmp.nii.gz" \
 			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-dg_tmp.nii.gz"
-	
-		# Square degibbs
-		fslmaths \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-dg_tmp.nii.gz" \
-			-sqr \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-dgsqr_tmp.nii.gz"
-	
-		# Square noise
-		fslmaths \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-noise_tmp.nii.gz" \
-			-sqr \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-noisesqr_tmp.nii.gz"
-		
-		# Subtract sqaured noise from squared degibbs
-		fslmaths \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-dgsqr_tmp.nii.gz" \
-			-sub \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-noisesqr_tmp.nii.gz" \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-rician_tmp.nii.gz"
-	
-		# Square root the subtracted image (eddy input)
-		fslmaths \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-rician_tmp.nii.gz" \
-			-sqrt \
-			"${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi-preproc.nii.gz"
 	
 		# Clean up directory of temporary files
 		rm -r ${dwi}/${sub}/${ses}/*tmp*
