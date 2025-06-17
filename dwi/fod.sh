@@ -402,12 +402,17 @@ fdcdir=${fba}/template/study_template/metrics/smoothed/fdc
 analysis=${fba}/analysis
 # Create output directories
 mkdir -p ${analysis}/group_fba/6m_pc \
-${analysis}/group_fba/12m_pc
+${analysis}/group_fba/12m_pc \
+${analysis}/group_fba/pre
 
 # Loop through ses-01 files
 for pre in ${fdcdir}/sub-*_ses-01.mif; do
   # Extract subject ID (e.g., sub-001)
   sub=$(basename $pre | cut -d '_' -f 1)
+
+  # Populate preop directory
+  fdc_pre=${fdcdir}/${sub}_ses-01.mif
+  ln -s ${fdc_pre} ${analysis}/group_fba/pre/${sub}.mif
 
   # Define paths to sessions
   fdc_6m=${fdcdir}/${sub}_ses-02.mif
@@ -434,10 +439,23 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   fi
 done
 
+# Preoperative severity analysis
+ln -s ${fba}/template/study_template/metrics/smoothed/fdc/directions.mif \
+  ${fba}/template/study_template/metrics/smoothed/fdc/index.mif \
+  ${analysis}/group_fba/pre/
+  
+fixelcfestats \
+  ${analysis}/group_fba/pre \
+  ${analysis}/cfe_files/group_analyses/pre_subs.txt \
+  ${analysis}/cfe_files/group_analyses/pre_demeaned.txt \
+  ${analysis}/cfe_files/group_analyses/corr_con.txt \
+  ${fba}/template/study_template/matrix \
+  ${analysis}/cfe_files/group_analyses/pre_results
+
 # 6-month and 12-month percent change analyses
 for tp in 6m 12m; do
-  ln -s ${fba}/template/study_template/metrics/fdc_smooth/directions.mif \
-  ${fba}/template/study_template/metrics/fdc_smooth/index.mif \
+  ln -s ${fba}/template/study_template/metrics/smoothed/fdc/directions.mif \
+  ${fba}/template/study_template/metrics/smoothed/fdc/index.mif \
   ${analysis}/group_fba/${tp}_pc/
 
   fixelcfestats \
@@ -448,15 +466,6 @@ for tp in 6m 12m; do
   ${fba}/template/study_template/matrix \
   ${analysis}/cfe_files/group_analyses/${tp}_results
 done
-
-# Preoperative severity analysis
-fixelcfestats \
-  ${fba}/template/study_template/metrics/fdc_smooth  \
-  ${analysis}/cfe_files/group_analyses/pre_subs.txt \
-  ${analysis}/cfe_files/group_analyses/pre_demeaned.txt \
-  ${analysis}/cfe_files/group_analyses/corr_con.txt \
-  ${fba}/template/study_template/matrix \
-  ${analysis}/cfe_files/group_analyses/pre_results
 
 ###################
 
