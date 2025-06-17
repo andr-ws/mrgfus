@@ -422,10 +422,14 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   pc_6m=${analysis}/group_fba/6m_pc/${sub}.mif
   pc_12m=${analysis}/group_fba/12m_pc/${sub}.mif
 
+  diff_6m=${analysis}/group_fba/6m_pc/${sub}.mif
+  diff_12m=${analysis}/group_fba/12m_pc/${sub}.mif
+
   # Compute 6-month percent change if ses-02 exists
   if [ -f $fdc_6m ]; then
     echo "Computing 6m percent change for ${sub}"
     mrcalc $pre $fdc_6m -subtract $pre -divide 100 -mult $pc_6m
+    mrcalc $pre $fdc_6m -subtract $diff_6m
   else
     echo "Skipping 6m for ${sub} (missing ses-02)"
   fi
@@ -434,6 +438,7 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   if [ -f $fdc_12m ]; then
     echo "Computing 12m percent change for ${sub}"
     mrcalc $pre $fdc_12m -subtract $pre -divide 100 -mult $pc_12m
+    mrcalc $pre $fdc_12m -subtract $diff_12m
   else
     echo "Skipping 12m for ${sub} (missing ses-03)"
   fi
