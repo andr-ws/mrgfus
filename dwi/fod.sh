@@ -401,9 +401,13 @@ done
 fdcdir=${fba}/template/study_template/metrics/smoothed/fdc
 analysis=${fba}/analysis
 # Create output directories
-mkdir -p ${analysis}/group_fba/6m_pc \
-${analysis}/group_fba/12m_pc \
-${analysis}/group_fba/pre
+mkdir -p 
+${analysis}/group_fba/pre \
+${analysis}/group_fba/6m \
+${analysis}/group_fba/12m
+
+# ${analysis}/group_fba/6m_pc \
+# ${analysis}/group_fba/12m_pc \
 
 # Loop through ses-01 files
 for pre in ${fdcdir}/sub-*_ses-01.mif; do
@@ -418,17 +422,17 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   fdc_6m=${fdcdir}/${sub}_ses-02.mif
   fdc_12m=${fdcdir}/${sub}_ses-03.mif
 
-  # Output filenames
-  pc_6m=${analysis}/group_fba/6m_pc/${sub}.mif
-  pc_12m=${analysis}/group_fba/12m_pc/${sub}.mif
+  # Percent change images
+  #pc_6m=${analysis}/group_fba/6m_pc/${sub}.mif
+  #pc_12m=${analysis}/group_fba/12m_pc/${sub}.mif
 
-  diff_6m=${analysis}/group_fba/6m_pc/${sub}.mif
-  diff_12m=${analysis}/group_fba/12m_pc/${sub}.mif
+  diff_6m=${analysis}/group_fba/6m/${sub}.mif
+  diff_12m=${analysis}/group_fba/12m/${sub}.mif
 
   # Compute 6-month percent change if ses-02 exists
   if [ -f $fdc_6m ]; then
     echo "Computing 6m percent change for ${sub}"
-    mrcalc $pre $fdc_6m -subtract $pre -divide 100 -mult $pc_6m
+    #mrcalc $pre $fdc_6m -subtract $pre -divide 100 -mult $pc_6m
     mrcalc $pre $fdc_6m -subtract $diff_6m
   else
     echo "Skipping 6m for ${sub} (missing ses-02)"
@@ -437,7 +441,7 @@ for pre in ${fdcdir}/sub-*_ses-01.mif; do
   # Compute 12-month percent change if ses-03 exists
   if [ -f $fdc_12m ]; then
     echo "Computing 12m percent change for ${sub}"
-    mrcalc $pre $fdc_12m -subtract $pre -divide 100 -mult $pc_12m
+    #mrcalc $pre $fdc_12m -subtract $pre -divide 100 -mult $pc_12m
     mrcalc $pre $fdc_12m -subtract $diff_12m
   else
     echo "Skipping 12m for ${sub} (missing ses-03)"
