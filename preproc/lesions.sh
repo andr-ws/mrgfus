@@ -46,7 +46,7 @@ done
 matlab \
   -nodisplay \
   -nosplash \
-  -r "run('/Users/neuro-239/scripts/flip_rh_lesions.m'); exit;"
+  -r "run('/Users/neuro-239/scripts/lesions_flip.m'); exit;"
 
 # Modelling
 mkdir ${lesions}/model
