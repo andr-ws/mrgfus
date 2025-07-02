@@ -457,11 +457,7 @@ fixelcfestats \
   ${fba}/template/study_template/matrix \
   ${analysis}/cfe_files/group_analyses/pre_results
 
-
-
-
-
-# 6-month and 12-month percent change analyses
+# 6-month and 12-month analyses
 for metric in log_fc fdc fd
   for tp in 6m 12m; do
     ln -s ${fba}/template/study_template/metrics/smoothed/${metric}/directions.mif \
@@ -479,49 +475,60 @@ for metric in log_fc fdc fd
 done
 ###################
 
-# Store the FDC value of the sweetspot per session (else NA)
-mean_fdc_csv=${fba}/analysis/sweetspot/sweetspot_mean-fdc.csv
-echo "sub-id,ses-01,ses-02,ses-03" > ${mean_fdc_csv}
-mkdir -p ${fba}/analysis/sweetspot/mean_fdc_maps
+# Store the metric value of the sweetspot per session (else NA)
+for metric in fdc log_fc fd; do
+  lh_mean_metric_csv=${fba}/analysis/sweetspot/lh_mean-${metric}.csv
+  rh_mean_metric_csv=${fba}/analysis/sweetspot/rh_mean-${metric}.csv
+  echo "sub-id,ses-01,ses-02,ses-03" > ${lh_mean_metric_csv}
+  echo "sub-id,ses-01,ses-02,ses-03" > ${rh_mean_metric_csv}
+  mkdir -p ${fba}/analysis/sweetspot/mean_${metric}_maps
+done
 
 # Loop through each subject
 while read -r sub; do
   echo "Processing $sub"
-  sweetspot=POINT_2_WMFOD_SS
 
-  # Initialize CSV line
-  line="$sub"
+  for metric in fdc log_fc fd; do
+    # Initialize CSV line
+    lh_line="$sub"
+    rh_line="$sub"
+    
+    # Loop through sessions
+    for ses in ses-01 ses-02 ses-03; do
+      metric_mif=${fba}/template/study_template/metrics/smoothed/${metric}/${sub}_${ses}.mif
 
-  # Loop through sessions
-  for ses in ses-01 ses-02 ses-03; do
-    fdc_mif=${fba}/template/study_template/metrics/smoothed/fdc/${sub}_${ses}.mif
-    fdc_map=${fba}/analysis/sweetspot/mean_fdc_maps/${sub}_${ses}.nii.gz
+      # Check if input file exists
+      if [[ -f "$metric_mif" ]]; then
+        for hemi in lh rh; do
+          metric_map=${fba}/analysis/sweetspot/mean_${metric}_maps/${hemi}_${sub}_${ses}.nii.gz
 
-    # Check if input file exists
-    if [[ -f "$fdc_mif" ]]; then
-      fixel2voxel \
-        ${fdc_mif} \
-        mean \
-        ${fdc_map} \
-        -weighted <UNSURE OF WHAT THIS NEED TO BE> ###########################
+          fixel2voxel \
+            ${metric_mif} \
+            mean \
+            ${metric_map} \
+            -weighted ${metric_mif}
+          
+          fslmaths \
+            ${metric_map} \
+            -mul \
+            ${fba}/analysis/sweetspot/${hemi}_nmap-wmfod.nii.gz \
+            ${metric_map}
+          
+          value=$(fslstats "$metric_map" -M)
         
-      fslmaths \
-        ${fdc_map} \
-        -mul \
-        ${sweetspot} \
-        ${fdc_map} # overwrite
-        
-      value=$(fslstats "$fdc_map" -M)
-    else
-      echo "  $ses: Missing FDC file."
-      value="NA"
-    fi
-
-    # Append value to line
-    line="${line},${value}"
+          if [[ "$hemi" == "lh" ]]; then
+            lh_line="${lh_line},${value}"
+          else
+            rh_line="${rh_line},${value}"
+          fi
+        done
+      else
+        echo "  $ses: Missing $metric file."
+        lh_line="${lh_line},NA"
+        rh_line="${rh_line},NA"
+      fi
+    done
+    echo "$lh_line" >> ${fba}/analysis/sweetspot/lh_mean-${metric}.csv
+    echo "$rh_line" >> ${fba}/analysis/sweetspot/rh_mean-${metric}.csv
   done
-  # Append full row to CSV
-  echo ${line} >> ${mean_fdc_csv}
 done < ${hemis}
-
-# Calculate brain atrophy using a regression-residuals method (TBV~ICV)
