@@ -396,58 +396,54 @@ done
 #  -o ${fba}/template/study_template/wmfod_template-MNI_ \
 
 # Group analyses:
-
-# Percent change images for postop. timepoints
-fdcdir=${fba}/template/study_template/metrics/smoothed/fdc
+metricbase=${fba}/template/study_template/metrics/smoothed
 analysis=${fba}/analysis
 # Create output directories
-mkdir -p 
-${analysis}/group_fba/pre \
-${analysis}/group_fba/6m \
-${analysis}/group_fba/12m
-
-# ${analysis}/group_fba/6m_pc \
-# ${analysis}/group_fba/12m_pc \
 
 # Loop through ses-01 files
-for pre in ${fdcdir}/sub-*_ses-01.mif; do
-  # Extract subject ID (e.g., sub-001)
-  sub=$(basename $pre | cut -d '_' -f 1)
+for metric in fdc fd log_fc; do
 
-  # Populate preop directory
-  fdc_pre=${fdcdir}/${sub}_ses-01.mif
-  ln -s ${fdc_pre} ${analysis}/group_fba/pre/${sub}.mif
+  mkdir -p 
+  ${analysis}/group_fba/${metric}/pre \
+  ${analysis}/group_fba/${metric}/6m \
+  ${analysis}/group_fba/${metric}/12m
 
-  # Define paths to sessions
-  fdc_6m=${fdcdir}/${sub}_ses-02.mif
-  fdc_12m=${fdcdir}/${sub}_ses-03.mif
+  for pre in ${metricbase}/${metric}/sub-*_ses-01.mif; do
+    metricdir=${metricbase}/${metric}
+    
+    # Extract subject ID (e.g., sub-001)
+    sub=$(basename $pre | cut -d '_' -f 1)
 
-  # Percent change images
-  #pc_6m=${analysis}/group_fba/6m_pc/${sub}.mif
-  #pc_12m=${analysis}/group_fba/12m_pc/${sub}.mif
+    # Populate preop directory
+    metric_pre=${metricdir}/${sub}_ses-01.mif
+    ln -s ${metric_pre} ${analysis}/group_fba/pre/${sub}.mif
 
-  diff_6m=${analysis}/group_fba/6m/${sub}.mif
-  diff_12m=${analysis}/group_fba/12m/${sub}.mif
+    # Define paths to sessions
+    metric_6m=${metricdir}/${sub}_ses-02.mif
+    metric_12m=${metricdir}/${sub}_ses-03.mif
 
-  # Compute 6-month percent change if ses-02 exists
-  if [ -f $fdc_6m ]; then
-    echo "Computing 6m percent change for ${sub}"
-    #mrcalc $pre $fdc_6m -subtract $pre -divide 100 -mult $pc_6m
-    mrcalc $pre $fdc_6m -subtract $diff_6m
-  else
-    echo "Skipping 6m for ${sub} (missing ses-02)"
-  fi
+    metric_diff_6m=${analysis}/group_fba/${metric}/6m/${sub}.mif
+    metric_diff_12m=${analysis}/group_fba/${metric}/12m/${sub}.mif
 
-  # Compute 12-month percent change if ses-03 exists
-  if [ -f $fdc_12m ]; then
-    echo "Computing 12m percent change for ${sub}"
-    #mrcalc $pre $fdc_12m -subtract $pre -divide 100 -mult $pc_12m
-    mrcalc $pre $fdc_12m -subtract $diff_12m
-  else
-    echo "Skipping 12m for ${sub} (missing ses-03)"
-  fi
+    # Compute 6-month percent change if ses-02 exists
+    if [ -f $fdc_6m ]; then
+      echo "Computing 6m percent change for ${sub}"
+      mrcalc $pre $fdc_6m -subtract $diff_6m
+    else
+      echo "Skipping 6m for ${sub} (missing ses-02)"
+    fi
+
+    # Compute 12-month percent change if ses-03 exists
+    if [ -f $fdc_12m ]; then
+      echo "Computing 12m percent change for ${sub}"
+      mrcalc $pre $fdc_12m -subtract $diff_12m
+    else
+      echo "Skipping 12m for ${sub} (missing ses-03)"
+    fi
+  done
 done
 
+# NEED TO ADD IN OTHER METRICS
 # Preoperative severity analysis
 ln -s ${fba}/template/study_template/metrics/smoothed/fdc/directions.mif \
   ${fba}/template/study_template/metrics/smoothed/fdc/index.mif \
@@ -461,21 +457,26 @@ fixelcfestats \
   ${fba}/template/study_template/matrix \
   ${analysis}/cfe_files/group_analyses/pre_results
 
+
+
+
+
 # 6-month and 12-month percent change analyses
-for tp in 6m 12m; do
-  ln -s ${fba}/template/study_template/metrics/smoothed/fdc/directions.mif \
-  ${fba}/template/study_template/metrics/smoothed/fdc/index.mif \
-  ${analysis}/group_fba/${tp}_pc/
+for metric in log_fc fdc fd
+  for tp in 6m 12m; do
+    ln -s ${fba}/template/study_template/metrics/smoothed/${metric}/directions.mif \
+      ${fba}/template/study_template/metrics/smoothed/${metric}/index.mif \
+      ${analysis}/group_fba/${metric}/${tp}/
 
-  fixelcfestats \
-  ${analysis}/group_fba/${tp}_pc \
-  ${analysis}/cfe_files/group_analyses/${tp}_subs.txt \
-  ${analysis}/cfe_files/group_analyses/${tp}_demeaned.txt \
-  ${analysis}/cfe_files/group_analyses/corr_con.txt \
-  ${fba}/template/study_template/matrix \
-  ${analysis}/cfe_files/group_analyses/${tp}_results
+    fixelcfestats \
+      ${analysis}/group_fba/${metric}/${tp} \
+      ${analysis}/cfe_files/group_analyses/${tp}_subs.txt \
+      ${analysis}/cfe_files/group_analyses/${tp}_demeaned.txt \
+      ${analysis}/cfe_files/group_analyses/corr_con.txt \
+      ${fba}/template/study_template/matrix \
+      ${analysis}/cfe_files/group_analyses/${metric}_${tp}_results
+  done
 done
-
 ###################
 
 # Store the FDC value of the sweetspot per session (else NA)
