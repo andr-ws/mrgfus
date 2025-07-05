@@ -26,7 +26,7 @@ while read -r sub hemi; do
     mkdir -p ${fod}
 
     # Need to check if here if a subject is rhetorical targeted
-    if [[ "$hemi" == "lh" ]]; then
+    if [[ "$hemi" == "rh" ]]; then
     
       # Flip x-axis
       mrtransform \
@@ -36,7 +36,8 @@ while read -r sub hemi; do
         -fslgrad \
         ${eddy}/${sub}_dwi_edc.eddy_rotated_bvecs \
         ${dwi}/${sub}/${ses}/${sub}_${ses}_acq-dwi.bval
-    elif [[ "$hemi" == "rh" ]]; then
+        
+    elif [[ "$hemi" == "lh" ]]; then
     
       mrconvert \
         ${eddy}/${sub}_dwi_edc.nii.gz \
@@ -111,7 +112,8 @@ for dir in ${fba}/data/sub-*; do
 
   for ses in ses-01 ses-02 ses-03; do
     fod=${dir}/${ses}/fod
-    
+
+    source activate ~/mrtrix_env/bin/activate
     ss3t_csd_beta1 \
       ${fod}/${sub}_dwi_us.mif \
       ${fba}/rfuncs/group_response_wm.txt \
@@ -121,7 +123,7 @@ for dir in ${fba}/data/sub-*; do
       ${fba}/rfuncs/group_response_csf.txt \
       ${fod}/tmp_${sub}_csffod.mif \
       -mask ${fod}/${sub}_b0_brain_mask_us.mif
-
+    deactivate
     mtnormalise \
       ${fod}/tmp_${sub}_wmfod.mif ${fod}/${sub}_wmfod.mif \
       ${fod}/tmp_${sub}_gmfod.mif ${fod}/${sub}_gmfod.mif \
