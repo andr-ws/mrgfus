@@ -148,7 +148,7 @@ done
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
-  itemp=${fba}/template/itemps/${sub}
+  itemp=${fba}/template/intra-temps/${sub}
   mkdir -p ${itemp}/fods ${itemp}/masks
 
   # Loop through possible sessions
@@ -170,13 +170,13 @@ for dir in ${fba}/data/sub-*; do
   done
 
   # Run population_template with rigid registration
+  # Was -type rigid , now running rigid_affine_nonlinear, as default
   population_template \
     ${itemp}/fods/ \
     ${itemp}/fods/${sub}_itemp.mif \
     -mask_dir ${itemp}/masks/ \
     -voxel_size 1.25 \
-    -type rigid \
-    -linear_transformations_dir ${itemp}/xfms
+    -warp_dir ${itemp}/xfms
 
   # Rename for clarity
   mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt 
