@@ -179,7 +179,7 @@ for dir in ${fba}/data/sub-*; do
     -warp_dir ${itemp}/xfms
 
   # Rename for clarity
-  mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt 
+  #mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt 
 
   echo "Done with subject: ${sub}"
   echo "----------------------------"
@@ -207,8 +207,8 @@ population_template \
 for dir in ${fba}/data/sub-*; do
   sub=$(basename ${dir})
 
-  itemp=${fba}/template/itemps
-  
+  itemp=${fba}/template/intra-temps
+
   mrregister \
     ${itemp}/${sub}/fods/${sub}_itemp.mif \
     -type rigid_affine_nonlinear \
@@ -227,9 +227,11 @@ for dir in ${fba}/data/sub-*; do
     fod=${dir}/${ses}/fod
 
     # Compose for ease and later when need single file
+    # Perhaps need to ammend to compose two warps
+    
     transformcompose \
-      ${itemp}/${sub}/xfms/${sub}_${ses}_itemp_rigid.txt \
-      ${itemp}/${sub}/xfms/${sub}_itemp-temp_warp.mif \
+      ${itemp}/${sub}/xfms/${sub}_${ses}_itemp_rigid.txt \ # The warp from native to intra
+      ${itemp}/${sub}/xfms/${sub}_itemp-temp_warp.mif \ # The warp from intra to template
       ${fod}/${sub}-template_warp.mif
 
     # Apply to the mask
