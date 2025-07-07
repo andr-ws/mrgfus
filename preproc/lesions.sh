@@ -42,7 +42,7 @@ for dir in ${raw}/sub-*; do
     -T ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1InverseWarp.nii.gz
 done
 
-# Generate masks in immT2w-T1w space
+# Generate masks in native space
 # ${lesions}/masks/nii/${sub}_lesion.nii.gz ...
 
 for dir in ${lesions}/data/sub-*; do
@@ -50,14 +50,14 @@ for dir in ${lesions}/data/sub-*; do
 
   mkdir -p ${lesions}/masks/mni/${sub}
 
-  # Apply the ANTs T1w-MNI warp
+  # Apply the SynthMorph immT2-T1w and ANTs T1w-MNI warps
   antsApplyTransforms \
     -d 3 \
     -i ${lesions}/masks/nii/${sub}_lesion.nii.gz \
     -r ${MNI} \
     -t ${der}/anat/${sub}/ses-01/${sub}_T1w-MNI_05mm_1Warp.nii.gz \
     -t ${der}/anat/${sub}/ses-01/${sub}_T1w-MNI_05mm_0GenericAffine.mat \
-    -t ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_0GenericAffine.mat \
+    -t ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1Warp.nii.gz \
     -o ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
     --interpolation NearestNeighbor
 done
