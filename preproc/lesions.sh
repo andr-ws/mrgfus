@@ -10,7 +10,7 @@ raw=/Volumes/LA_4TB/datasets/mrgfus/rawdata
 der=/Volumes/LA_4TB/datasets/mrgfus/derivatives
 sf=${der}/study_files
 lesions=${der}/lesions
-MNI=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
+MNI=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii.gz
 
 # Need to generate coreg btwn lesion T2 and ses-01 T1
 for dir in ${raw}/sub-*; do
@@ -40,6 +40,17 @@ for dir in ${raw}/sub-*; do
     -o ${lesions}/data/${sub}/${sub}_immT2w-T1w.nii.gz \
     -t ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1Warp.nii.gz \
     -T ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1InverseWarp.nii.gz
+
+  # Alternatively... imm-T2w straight to MNI T2!
+  mri_synthmorph \
+    register \
+    ${immT2} \
+    ${MNI}  \
+    -o ${lesions}/data/${sub}/${sub}_immT2w-MNI.nii.gz \
+    -t ${lesions}/data/${sub}/${sub}_immT2w-MNI_1Warp.nii.gz \
+    -T ${lesions}/data/${sub}/${sub}_immT2w-MNI_1InverseWarp.nii.gz
+
+  # Can then draw directly on MNI, or draw on original T2w and apply the transform
 done
 
 # Generate masks in native space
