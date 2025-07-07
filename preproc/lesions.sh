@@ -15,22 +15,42 @@ MNI=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
 # Need to generate coreg btwn lesion T2 and ses-01 T1
 for dir in ${raw}/sub-*; do
   sub=$(basename ${dir})
+  
   mkdir -p ${lesions}/data/${sub}
-  T2=${dir}/imm_postop/${sub}_acq-T2w.nii.gz
-  T1=${der}/anat/${sub}/ses-01/${sub}_ses-01_acq-T1w_biasco.nii.gz
+  preT2=${dir}/rawdata/ses-01/anat/${sub}_acq-T2w.nii.gz
+  immT2=${dir}/imm_postop/${sub}_acq-T2w.nii.gz
+  preT1=${der}/anat/${sub}/ses-01/${sub}_ses-01_acq-T1w_biasco.nii.gz
 
   # Rigid transform
   antsRegistrationSyNQuick.sh \
     -d 3 \
-    -f ${T1} \
-    -m ${T2} \
-    -o ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_ \
+    -f ${preT1} \
+    -m ${preT2} \
+    -o ${lesions}/data/${sub}/${sub}_T2w-ses-01_T1w_ \
     -t r \
     -n 12
-  
-  # Warp the lesion masks
+
+  coregT2=${lesions}/data/${sub}/${sub}_T2w-ses-01_T1w_Warped.nii.gz
+
+  # Register the immT2 to T2w in T1w space
+  mri_synthmorph \
+    register \
+    ${immT2} \
+    ${coregT2} \
+    -o ${lesions}/data/${sub}/${sub}_immT2w-T1w.nii.gz \
+    -t ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1Warp.nii.gz \
+    -T ${lesions}/data/${sub}/${sub}_immT2w-ses-01_T1w_1InverseWarp.nii.gz
+done
+
+# Generate masks in immT2w-T1w space
+# ${lesions}/masks/nii/${sub}_lesion.nii.gz ...
+
+for dir in ${lesions}/data/sub-*; do
+  sub=$(basename ${dir})
+
   mkdir -p ${lesions}/masks/mni/${sub}
 
+  # Apply the ANTs T1w-MNI warp
   antsApplyTransforms \
     -d 3 \
     -i ${lesions}/masks/nii/${sub}_lesion.nii.gz \
