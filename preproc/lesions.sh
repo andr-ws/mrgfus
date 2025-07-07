@@ -50,7 +50,8 @@ for dir in ${raw}/sub-*; do
     -t ${lesions}/data/${sub}/${sub}_immT2w-MNI_1Warp.nii.gz \
     -T ${lesions}/data/${sub}/${sub}_immT2w-MNI_1InverseWarp.nii.gz
 
-  # Can then draw directly on MNI, or draw on original T2w and apply the transform
+  # Can then draw directly on MNI, or draw on original T2w and apply the transform.
+  # From first impressions, drawing on the MNI T2 looks better than transforming!
 done
 
 # Generate masks in native space
