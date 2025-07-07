@@ -19,7 +19,7 @@ for dir in ${raw}/sub-*; do
   T2=${dir}/imm_postop/${sub}_acq-T2w.nii.gz
   T1=${der}/anat/${sub}/ses-01/${sub}_ses-01_acq-T1w_biasco.nii.gz
 
-  # Rigid affine transform
+  # Rigid transform
   antsRegistrationSyNQuick.sh \
     -d 3 \
     -f ${T1} \
