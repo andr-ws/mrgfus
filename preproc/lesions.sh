@@ -54,8 +54,9 @@ for dir in ${raw}/sub-*; do
   # From first impressions, drawing on the MNI T2 looks better than transforming!
 done
 
-# Generate masks in native space
-# ${lesions}/masks/nii/${sub}_lesion.nii.gz ...
+# Generate masks in native space 
+# ${lesions}/data/${sub}_lesion.nii.gz ...
+# Or do as I have, and define them in MNI space.
 
 for dir in ${lesions}/data/sub-*; do
   sub=$(basename ${dir})
