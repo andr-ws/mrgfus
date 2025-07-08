@@ -105,6 +105,7 @@ done < ${hemis}
 mrcat \
   ${lesions}/model/tmp/*_lesion.nii.gz \
   ${lesions}/model/4d_lesions.nii.gz
+  
 # Create an N-map \
 mrmath \
   ${lesions}/model/tmp/*lesion.nii.gz \
@@ -116,23 +117,23 @@ rm -r ${lesions}/model/tmp
 
 # Create study masks (remove lowest 10%, binarise and NaN 0)
 fslmaths \
-  ${lesions}/model/lesion_n-map.nii.gz \
+  ${lesions}/model/n-map.nii.gz \
   -thrP 10 \
   -bin \
-  ${lesions}/model/lesion_n-map_thr.nii.gz
+  ${lesions}/model/n-map_thr.nii.gz
 
 mrconvert \
-  ${lesions}/model/lesion_n-map_thr.nii.gz \
+  ${lesions}/model/n-map_thr.nii.gz \
   - | mrcalc - 1 nan -if \
-  ${lesions}/model/lesion_n-map_thr.nii.g
+  ${lesions}/model/n-map_thr_nan.nii.g
 
 # Perform sweetspot analysis
 randomise \
   -i ${lesions}/model/4d_lesions.nii.gz \
   -o ${lesions}/model/randomise \
-  -d design.mat \
-  -t design.con \
-  -m ${lesions}/model/lesion_n-map_thr.nii.gz \
+  -d dm \
+  -t con.con \
+  -m ${lesions}/model/n-map_thr_nan.nii.gz \
   -n 10000 \
   -D \
   -T
