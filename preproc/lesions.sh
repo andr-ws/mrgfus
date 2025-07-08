@@ -134,7 +134,7 @@ randomise \
   -d dm \
   -t con.con \
   -m ${lesions}/model/n-map_thr_nan.nii.gz \
-  -n 10000 \
+  -n 5000 \
   -D \
   -T
 
