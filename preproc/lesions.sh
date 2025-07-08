@@ -78,7 +78,7 @@ done
 matlab \
   -nodisplay \
   -nosplash \
-  -r "run('/Users/neuro-239/scripts/lesions_flip.m'); exit;"
+  -r "run('/Users/a9ws/scripts/lesions_flip.m'); exit;"
 
 # Modelling
 mkdir ${lesions}/model
@@ -88,11 +88,11 @@ mkdir ${lesions}/model/tmp
 while read -r sub hemi; do
   if [[ $hemi == lh ]]; then
     ln -s \
-    ${lesions}/masks/mni/${sub}/${sub}_lesion.nii.gz \
+    ${lesions}/data/${sub}/${sub}_lesion.nii.gz \
     ${lesions}/model/tmp/
   elif [[ $hemi == rh ]]; then
     ln -s \
-    ${lesions}/masks/mni/${sub}/${sub}_flesion.nii.gz \
+    ${lesions}/data/${sub}/${sub}_flesion.nii.gz \
     ${lesions}/model/tmp/${sub}_lesion.nii.gz
   else 
     echo "Missing hemisphere information for ${sub}"
