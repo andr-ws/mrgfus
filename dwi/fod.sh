@@ -215,8 +215,8 @@ template=${sf}/fba/template.txt
 mkdir -p ${fba}/template/study_template/fods ${fba}/template/study_template/masks
 
 while read -r sub; do
-  ln -s ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/
-  ln -s ${fba}/template/itemps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/${sub}_itemp.mif
+  ln -s ${fba}/template/intra-temps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/
+  ln -s ${fba}/template/intra-temps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/${sub}_itemp.mif
 done < $template
 
 wmfod=${fba}/template/study_template/wmfod
