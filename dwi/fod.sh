@@ -180,8 +180,28 @@ for dir in ${fba}/data/sub-*; do
     -voxel_size 1.25 \
     -warp_dir ${itemp}/xfms
 
+  mrconvert \
+    ${itemp}/fods/${sub}_itemp.mif \
+    -coord 3 0 -axes 0,1,2 \
+    ${itemp}/fods/tmp_${sub}_itemp.nii.gz
+
+  fslmaths \
+    ${itemp}/fods/tmp_${sub}_itemp.nii.gz \
+    -nan \
+    ${itemp}/fods/tmp_${sub}_itemp_no-nan.nii.gz
+
+  mri_synthstrip \
+    -i ${itemp}/fods/tmp_${sub}_itemp_no-nan.nii.gz \
+    -o ${itemp}/fods/tmp_${sub}_itemp_strip.nii.gz \
+    -m ${itemp}/fods/${sub}_itemp_mask.nii.gz \
+    -t 12
+
+  mrconvert \
+    ${itemp}/fods/${sub}_itemp_mask.nii.gz \
+    ${itemp}/fods/${sub}_itemp_mask.mif
+
   # Rename for clarity
-  #mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt 
+  #mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt
 
   echo "Done with subject: ${sub}"
   echo "----------------------------"
@@ -190,12 +210,12 @@ done
 
 # Now generate the study template
 template=${sf}/fba/template.txt
-mkdir -p ${fba}/template/study_template/fods
+mkdir -p ${fba}/template/study_template/fods ${fba}/template/study_template/masks
 
 while read -r sub; do
   ln -s \
-    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif \
-    ${fba}/template/study_template/fods/
+    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/
+    ${fba}/template/itemps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/
 done < $template
 
 wmfod=${fba}/template/study_template/wmfod
@@ -204,6 +224,7 @@ mkdir -p ${wmfod}
 population_template \
   ${fba}/template/study_template/fods/ \
   ${wmfod}/wmfod_template.mif \
+  mask_dir ${fba}/template/study_template/masks/ \
   -voxel_size 1.25
 
 for dir in ${fba}/data/sub-*; do
