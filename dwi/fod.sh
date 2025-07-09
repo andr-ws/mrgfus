@@ -254,7 +254,7 @@ for dir in ${fba}/data/sub-*; do
     # Perhaps need to ammend to compose two warps
     
     transformcompose \
-      ${itemp}/${sub}/xfms/${sub}_${ses}_itemp_rigid.txt \ # The warp from native to intra
+      ${itemp}/${sub}/xfms/${sub}_${ses}.mif \ # The warp from native to intra
       ${itemp}/${sub}/xfms/${sub}_itemp-temp_warp.mif \ # The warp from intra to template
       ${fod}/${sub}-template_warp.mif
 
