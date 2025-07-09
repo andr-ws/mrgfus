@@ -215,9 +215,8 @@ template=${sf}/fba/template.txt
 mkdir -p ${fba}/template/study_template/fods ${fba}/template/study_template/masks
 
 while read -r sub; do
-  ln -s \
-    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/ \
-    ${fba}/template/itemps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/
+  ln -s ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/
+  ln -s ${fba}/template/itemps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/${sub}_itemp.mif
 done < $template
 
 wmfod=${fba}/template/study_template/wmfod
@@ -226,7 +225,7 @@ mkdir -p ${wmfod}
 population_template \
   ${fba}/template/study_template/fods/ \
   ${wmfod}/wmfod_template.mif \
-  mask_dir ${fba}/template/study_template/masks/ \
+  -mask_dir ${fba}/template/study_template/masks/ \
   -voxel_size 1.25
 
 for dir in ${fba}/data/sub-*; do
