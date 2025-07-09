@@ -193,11 +193,11 @@ for dir in ${fba}/data/sub-*; do
   mri_synthstrip \
     -i ${itemp}/fods/tmp_${sub}_itemp_no-nan.nii.gz \
     -o ${itemp}/fods/tmp_${sub}_itemp_strip.nii.gz \
-    -m ${itemp}/fods/${sub}_itemp_mask.nii.gz \
+    -m ${itemp}/fods/tmp_${sub}_itemp_mask.nii.gz \
     -t 12
 
   mrconvert \
-    ${itemp}/fods/${sub}_itemp_mask.nii.gz \
+    ${itemp}/fods/tmp_${sub}_itemp_mask.nii.gz \
     ${itemp}/fods/${sub}_itemp_mask.mif
 
   rm ${itemp}/fods/tmp*
