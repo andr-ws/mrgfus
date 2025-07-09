@@ -216,7 +216,7 @@ mkdir -p ${fba}/template/study_template/fods ${fba}/template/study_template/mask
 
 while read -r sub; do
   ln -s \
-    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/
+    ${fba}/template/itemps/${sub}/fods/${sub}_itemp.mif ${fba}/template/study_template/fods/ \
     ${fba}/template/itemps/${sub}/fods/${sub}_itemp_mask.mif ${fba}/template/study_template/masks/
 done < $template
 
