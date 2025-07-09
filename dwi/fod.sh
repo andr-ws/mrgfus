@@ -200,6 +200,8 @@ for dir in ${fba}/data/sub-*; do
     ${itemp}/fods/${sub}_itemp_mask.nii.gz \
     ${itemp}/fods/${sub}_itemp_mask.mif
 
+  rm ${itemp}/fods/tmp*
+
   # Rename for clarity
   #mv ${itemp}/xfms/${sub}_${ses}.txt ${itemp}/xfms/${sub}_${ses}-itemp_rigid.txt
 
