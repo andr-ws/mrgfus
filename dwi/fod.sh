@@ -402,24 +402,30 @@ for metric in fd log_fc fdc; do
 done
 
 # Generate wmfod<->MNI (0.5mm) xfm
-# USE SYNTHMORPH HERE>>
-#mrconvert \
-#${fba}/template/study_template/wmfod_template.mif \
-#-coord 3 0 -axes 0,1,2 \
-#${fba}/template/study_template/wmfod_template.nii.gz
+T1=Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
+mrconvert \
+${fba}/template/study_template/wmfod_template.mif \
+  -coord 3 0 -axes 0,1,2 \
+  ${fba}/template/study_template/wmfod_template.nii.gz
 
-#mri_synthstrip \
-#-i ${fba}/template/study_template/wmfod_template.nii.gz \
-#-o ${fba}/template/study_template/wmfod_template_brain.nii.gz \
-#-m ${fba}/template/study_template/wmfod_template_brain_mask.nii.gz
+fslmaths \
+  ${fba}/template/study_template/wmfod_template.nii.gz \
+  -nan \
+  ${fba}/template/study_template/wmfod_template_noNaN.nii.gz
 
-#MNI_T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii
-#antsRegistrationSyN.sh \
-#  -f ${MNI_T2} \
-#  -d 3 \
-#  -m ${fba}/template/study_template/wmfod_template.nii.gz \
-#  -n 12
-#  -o ${fba}/template/study_template/wmfod_template-MNI_ \
+mri_synthstrip \
+  -i ${fba}/template/study_template/wmfod/wmfod_template_noNaN.nii.gz \
+  -o ${fba}/template/study_template/wmfod/wmfod_template_noNaN_brain.nii.gz \
+  -m ${fba}/template/study_template/wmfod/wmfod_template_noNaN_brain_mask.nii.gz
+
+mri_synthmorph \
+  register \
+  -o ${fba}/template/study_template/wmfod_template-MNI.nii.gz \
+  -O ${fba}/template/study_template/MNI-wmfod_template.nii.gz \
+  ${fba}/template/study_template/wmfod_template_noNaN_brain_mask.nii.gz \
+  ${T1} \
+  -t ${fba}/template/study_template/wmfod_template-MNI_warp.nii.gz \
+  -T ${fba}/template/study_template/MNI-wmfod_template_warp.nii.gz
 
 # Group analyses:
 metricbase=${fba}/template/study_template/metrics/smoothed
