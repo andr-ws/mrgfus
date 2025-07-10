@@ -402,7 +402,7 @@ for metric in fd log_fc fdc; do
 done
 
 # Generate wmfod<->MNI (0.5mm) xfm
-T1=Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
+T1=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
 mrconvert \
 ${fba}/template/study_template/wmfod_template.mif \
   -coord 3 0 -axes 0,1,2 \
