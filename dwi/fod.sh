@@ -420,12 +420,12 @@ mri_synthstrip \
 
 mri_synthmorph \
   register \
-  -o ${fba}/template/study_template/wmfod_template-MNI.nii.gz \
-  -O ${fba}/template/study_template/MNI-wmfod_template.nii.gz \
-  ${fba}/template/study_template/wmfod_template_noNaN_brain_mask.nii.gz \
+  -o ${fba}/template/study_template/wmfod/wmfod_template-MNI.nii.gz \
+  -O ${fba}/template/study_template/wmfod/MNI-wmfod_template.nii.gz \
+  ${fba}/template/study_template/wmfod/wmfod_template_noNaN_brain_mask.nii.gz \
   ${T1} \
-  -t ${fba}/template/study_template/wmfod_template-MNI_warp.nii.gz \
-  -T ${fba}/template/study_template/MNI-wmfod_template_warp.nii.gz
+  -t ${fba}/template/study_template/wmfod/wmfod_template-MNI_warp.nii.gz \
+  -T ${fba}/template/study_template/wmfod/MNI-wmfod_template_warp.nii.gz
 
 # Group analyses:
 metricbase=${fba}/template/study_template/metrics/smoothed
