@@ -8,6 +8,25 @@ dwi=${base}/derivatives/data/dwi
 fba=${base}/derivatives/fba
 sf=${base}/derivatives/study_files
 
+# The idea here is to generate an averaged us_b0 image by warping each us_b0 to template
+# Then can use this to warp to MNI space and obtain the reverse
+
+for dir in ${fba}/data/sub-*; do
+  sub=$(basename ${dir})
+  for ses in ses-01 ses-02 ses-03; do
+    mrtransform ${dir}/${ses}/fod/${sub}_b0_brain_us.nii.gz \
+    -warp ${dir}/${ses}/fod/${sub}-template_warp.mif \
+    ${dir}/${ses}/fod/${sub}_b0-template.mif
+  done
+done
+
+mrmath \
+  ${fba}/data/*/*/fod/*_b0-template.mif \
+  mean \
+  ${fba}/study_template/wmfod/mean_b0_wmfod.nii.gz
+
+# Use this below
+
 mri_synthmorph \
   apply \
   -m nearest ${fba}/template/study_template/wmfod/MNI-wmfod_template_warp.nii.gz \
