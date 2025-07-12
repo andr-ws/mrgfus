@@ -177,8 +177,9 @@ for dir in ${fba}/data/sub-*; do
     ${itemp}/fods/ \
     ${itemp}/fods/${sub}_itemp.mif \
     -mask_dir ${itemp}/masks/ \
-    -voxel_size 1.25 \
-    -warp_dir ${itemp}/xfms
+    -voxel_size 1.25
+    #-warp_dir ${itemp}/xfms - cancelled this as doesn't recognise as
+    # warp fields. These are recomputed later.
 
   mrconvert \
     ${itemp}/fods/${sub}_itemp.mif \
@@ -401,8 +402,8 @@ for metric in fd log_fc fdc; do
     -matrix ${fba}/template/study_template/matrix/
 done
 
-# Generate wmfod<->MNI (0.5mm) xfm
-T1=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t1_brain.nii.gz
+# Generate wmfod to MNI (0.5mm) xfm - T2 the best after testing
+T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii.gz
 mrconvert \
 ${fba}/template/study_template/wmfod_template.mif \
   -coord 3 0 -axes 0,1,2 \
@@ -422,21 +423,21 @@ mri_synthmorph \
   register \
   -o ${fba}/template/study_template/wmfod/wmfod_template-MNI.nii.gz \
   -O ${fba}/template/study_template/wmfod/MNI-wmfod_template.nii.gz \
-  ${fba}/template/study_template/wmfod/wmfod_template_noNaN_brain_mask.nii.gz \
-  ${T1} \
+  ${fba}/template/study_template/wmfod/wmfod_template_noNaN.nii.gz \
+  ${T2} \
   -t ${fba}/template/study_template/wmfod/wmfod_template-MNI_warp.nii.gz \
   -T ${fba}/template/study_template/wmfod/MNI-wmfod_template_warp.nii.gz
 
 # Group analyses:
 metricbase=${fba}/template/study_template/metrics/smoothed
 analysis=${fba}/analysis
-# Create output directories
 
+# Create output directories
 # Loop through ses-01 files
 for metric in fdc fd log_fc; do
 
   mkdir -p 
-  ${analysis}/group_fba/${metric}/pre \
+  ${analysis}/group_fba/${metric}/preop \
   ${analysis}/group_fba/${metric}/6m \
   ${analysis}/group_fba/${metric}/12m
 
@@ -448,7 +449,7 @@ for metric in fdc fd log_fc; do
 
     # Populate preop directory
     metric_pre=${metricdir}/${sub}_ses-01.mif
-    ln -s ${metric_pre} ${analysis}/group_fba/pre/${sub}.mif
+    ln -s ${metric_pre} ${analysis}/group_fba/preop/${sub}.mif
 
     # Define paths to sessions
     metric_6m=${metricdir}/${sub}_ses-02.mif
@@ -459,7 +460,7 @@ for metric in fdc fd log_fc; do
 
     # Compute 6-month percent change if ses-02 exists
     if [ -f $fdc_6m ]; then
-      echo "Computing 6m percent change for ${sub}"
+      echo "Computing 6m difference maps for ${sub}"
       mrcalc $pre $fdc_6m -subtract $diff_6m
     else
       echo "Skipping 6m for ${sub} (missing ses-02)"
@@ -467,7 +468,7 @@ for metric in fdc fd log_fc; do
 
     # Compute 12-month percent change if ses-03 exists
     if [ -f $fdc_12m ]; then
-      echo "Computing 12m percent change for ${sub}"
+      echo "Computing 12m difference maps for ${sub}"
       mrcalc $pre $fdc_12m -subtract $diff_12m
     else
       echo "Skipping 12m for ${sub} (missing ses-03)"
@@ -475,37 +476,82 @@ for metric in fdc fd log_fc; do
   done
 done
 
-# NEED TO ADD IN OTHER METRICS
-# Preoperative severity analysis
-ln -s ${fba}/template/study_template/metrics/smoothed/fdc/directions.mif \
-  ${fba}/template/study_template/metrics/smoothed/fdc/index.mif \
-  ${analysis}/group_fba/pre/
-  
-fixelcfestats \
-  ${analysis}/group_fba/pre \
-  ${analysis}/cfe_files/group_analyses/pre_subs.txt \
-  ${analysis}/cfe_files/group_analyses/pre_demeaned.txt \
-  ${analysis}/cfe_files/group_analyses/corr_con.txt \
-  ${fba}/template/study_template/matrix \
-  ${analysis}/cfe_files/group_analyses/pre_results
 
-# 6-month and 12-month analyses
-for metric in log_fc fdc fd
+
+
+analysis=${fba}/analysis
+
+# Preoperative severity analyses
+for metric in fdc log_fc fd; do
+  ln -s ${fba}/template/study_template/metrics/smoothed/${metric}/directions.mif \
+    ${fba}/template/study_template/metrics/smoothed/${metric}/index.mif \
+    ${fba}/template/study_template/metrics/preop/${metric}/
+done
+
+# Log_fc and FDC
+for metric in log_fc fdc; do
+  fixelcfestats \
+    ${fba}/template/study_template/metrics/preop/${metric}/ \
+    ${analysis}/cfe_files/group_analyses/preop/preop_subs.txt \
+    ${analysis}/cfe_files/group_analyses/preop/unit_fc.txt \
+    ${analysis}/cfe_files/group_analyses/contrasts/fc/preop.txt \
+    ${fba}/template/study_template/matrix \
+    ${analysis}/cfe_files/group_analyses/preop/${metric}
+done
+
+# FD
+fixelcfestats \
+  ${fba}/template/study_template/metrics/preop/fd \
+  ${analysis}/cfe_files/group_analyses/preop/preop_subs.txt \
+  ${analysis}/cfe_files/group_analyses/preop/unit_fd.txt \
+  ${analysis}/cfe_files/group_analyses/contrasts/fd/preop.txt \
+  ${fba}/template/study_template/matrix \
+  ${analysis}/cfe_files/group_analyses/preop/fd
+
+
+# 6-month and 12-month difference analyses
+for metric in log_fc fdc fd; do
   for tp in 6m 12m; do
     ln -s ${fba}/template/study_template/metrics/smoothed/${metric}/directions.mif \
       ${fba}/template/study_template/metrics/smoothed/${metric}/index.mif \
-      ${analysis}/group_fba/${metric}/${tp}/
-
-    fixelcfestats \
-      ${analysis}/group_fba/${metric}/${tp} \
-      ${analysis}/cfe_files/group_analyses/${tp}_subs.txt \
-      ${analysis}/cfe_files/group_analyses/${tp}_demeaned.txt \
-      ${analysis}/cfe_files/group_analyses/corr_con.txt \
-      ${fba}/template/study_template/matrix \
-      ${analysis}/cfe_files/group_analyses/${metric}_${tp}_results
+      ${fba}/template/study_template/metrics/difference/${metric}/${tp}/
   done
 done
-###################
+
+# log_fc and FDC
+for tp in 6m 12m; do
+  for metric in log_fc fdc; do
+    fixelcfestats \
+      ${fba}/template/study_template/metrics/difference/${metric}/${tp}/ \
+      ${analysis}/cfe_files/group_analyses/${tp}/${tp}_subs.txt \
+      ${analysis}/cfe_files/group_analyses/${tp}/unit_fc.txt \
+      ${analysis}/cfe_files/group_analyses/contrasts/fc/diff.txt \
+      ${fba}/template/study_template/matrix \
+      ${analysis}/cfe_files/group_analyses/${tp}/${metric}
+  done
+
+  # FD
+  fixelcfestats \
+    ${fba}/template/study_template/metrics/difference/${metric}/${tp}/ \
+    ${analysis}/cfe_files/group_analyses/${tp}/${tp}_subs.txt \
+    ${analysis}/cfe_files/group_analyses/${tp}/unit_fd.txt \
+    ${analysis}/cfe_files/group_analyses/contrasts/fd/diff.txt \
+    ${fba}/template/study_template/matrix \
+    ${analysis}/cfe_files/group_analyses/${tp}/fd
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Store the metric value of the sweetspot per session (else NA)
 for metric in fdc log_fc fd; do
