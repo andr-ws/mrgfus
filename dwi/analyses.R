@@ -15,7 +15,7 @@ fd_long <- fd %>%
   pivot_longer(cols = starts_with("fd_tp"), names_to = "timepoint", values_to = "fibre_density")
 
 clin_long <- clin %>%
-  pivot_longer(cols = starts_with("tp"), names_to = "timepoint", values_to = "tremor_score") %>%
+  pivot_longer(cols = starts_with("tremor_tp"), names_to = "timepoint", values_to = "tremor_score") %>%
   mutate(timepoint = str_replace(timepoint, "tremor_", "fd_"))  # to match timepoint col in fd_long
 
 # Merge
