@@ -37,6 +37,9 @@ while read -r sub; do
     
     # Loop through sessions
     for ses in ses-01 ses-02 ses-03; do
+
+      # Need to format such that if ses-01, colname is tp1, if ses-02, colname is tp2, if ses-03, colname is tp3
+    
       metric_mif=${fba}/template/study_template/metrics/smoothed/${metric}/${sub}_${ses}.mif
 
       # Check if input file exists
