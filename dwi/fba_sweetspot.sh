@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Code here to perform FBA analysis based on lesion mapping results
 
 base=~/imaging/datasets/mrgfus
@@ -20,53 +22,41 @@ tckgen \
   -include ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
   -seed_unidirectional -stop
 
-# Store the metric value of the sweetspot per session (else NA)
-for metric in fdc log_fc fd; do
-  mean_metric_csv=${fba}/analysis/sweetspot/mean-${metric}.csv
-  echo "sub-id,ses-01,ses-02,ses-03" > ${mean_metric_csv}
-  mkdir -p ${fba}/analysis/sweetspot/mean_${metric}_maps
-done
 
-# Loop through each subject
+
+# Metrics for the nmap GAMM
+
+# Output CSV
+combined_csv="${fba}/analysis/sweetspot/combined_metrics_long.csv"
+echo "sub-id,timepoint,metric,value" > "${combined_csv}"
+
+# Map session names to timepoint labels
+declare -A tp_map
+tp_map=( ["ses-01"]="tp1" ["ses-02"]="tp2" ["ses-03"]="tp3" )
+
+# Read subject list
 while read -r sub; do
   echo "Processing $sub"
 
   for metric in fdc log_fc fd; do
-    # Initialize CSV line
-    line="$sub"
-    
-    # Loop through sessions
     for ses in ses-01 ses-02 ses-03; do
 
-      # Need to format such that if ses-01, colname is ${metric}_tp1, if ses-02, colname is ${metric}_tp2, if ses-03, colname is ${metric}_tp3
-    
-      metric_mif=${fba}/template/study_template/metrics/smoothed/${metric}/${sub}_${ses}.mif
+      tp_label=${tp_map[$ses]}
+      metric_mif="${fba}/template/study_template/metrics/smoothed/${metric}/${sub}_${ses}.mif"
+      metric_map="${fba}/analysis/sweetspot/mean_${metric}_maps/${sub}_${ses}.nii.gz"
 
-      # Check if input file exists
       if [[ -f "$metric_mif" ]]; then
-        metric_map=${fba}/analysis/sweetspot/mean_${metric}_maps/${sub}_${ses}.nii.gz
-
-        fixel2voxel \
-          ${metric_mif} \
-          mean \
-          ${metric_map} \
-          -weighted ${metric_mif}
-          
-        fslmaths \
-          ${metric_map} \
-          -mul \
-          ${fba}/analysis/sweetspot/nmap_thr-wmfod.nii.gz \
-          ${metric_map}
-          
-        value=$(fslstats "$metric_map" -M)
-        
-        newline="${line},${value}"
-
+        # Compute mean metric in sweet spot
+        fixel2voxel "${metric_mif}" mean "${metric_map}" -weighted "${metric_mif}"
+        fslmaths "${metric_map}" -mul "${fba}/analysis/sweetspot/nmap_thr-wmfod.nii.gz" "${metric_map}"
+        value=$(fslstats "${metric_map}" -M)
+        echo "${sub},${tp_label},${metric},${value}" >> "${combined_csv}"
       else
         echo "  $ses: Missing $metric file."
-        newline="${line},NA"
+        echo "${sub},${tp_label},${metric},NA" >> "${combined_csv}"
       fi
+
     done
-    echo "$newline" >> ${fba}/analysis/sweetspot/mean-${metric}.csv
   done
-done < ${hemis}
+done < "${hemis}"
+
