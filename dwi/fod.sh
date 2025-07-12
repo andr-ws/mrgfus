@@ -68,11 +68,11 @@ while read -r sub hemi; do
     mrgrid \
       ${fod}/tmp_${sub}_dwi_dn.mif \
       regrid -vox 1.25 \
-      ${fod}/${sub}_dwi_us.mif
+      ${fod}/tmp_${sub}_dwi_us.mif
 
     # Extract upsampled b0
     dwiextract \
-      ${fod}/${sub}_dwi_us.mif \
+      ${fod}/tmp_${sub}_dwi_us.mif \
       - -bzero | mrmath - mean ${fod}/tmp_${sub}_b0_us.mif \
       -axis 3
 
@@ -81,9 +81,10 @@ while read -r sub hemi; do
       ${fod}/tmp_${sub}_b0_us.nii.gz
 
     # Brain extract and create mask
+    # Keep the us_b0 for later (MNI to template warping)
     mri_synthstrip \
       -i ${fod}/tmp_${sub}_b0_us.nii.gz \
-      -o ${fod}/tmp_${sub}_b0_brain_us.nii.gz \
+      -o ${fod}/${sub}_b0_brain_us.nii.gz \
       -m ${fod}/tmp_${sub}_b0_brain_mask_us.nii.gz
 
     # Convert brain mask to mif format
