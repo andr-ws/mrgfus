@@ -23,7 +23,7 @@ done
 mrmath \
   ${fba}/data/*/*/fod/*_b0-template.mif \
   mean \
-  ${fba}/study_template/wmfod/mean_b0_wmfod.nii.gz
+  ${fba}/template/study_template/wmfod/mean_b0_wmfod.nii.gz
 
 # Use this below
 
