@@ -27,6 +27,18 @@ mrmath \
 
 # Use this below
 
+# Generate wmfod to MNI (0.5mm) xfm - T2 the best after testing
+T2=/Applications/leaddbs/templates/space/MNI152NLin2009bAsym/t2.nii.gz
+
+mri_synthmorph \
+  register \
+  -o ${fba}/template/study_template/wmfod/wmfod_template-MNI.nii.gz \
+  -O ${fba}/template/study_template/wmfod/MNI-wmfod_template.nii.gz \
+  ${fba}/template/study_template/wmfod/mean_b0_wmfod.nii.gz \
+  ${T2} \
+  -t ${fba}/template/study_template/wmfod/wmfod_template-MNI_warp.nii.gz \
+  -T ${fba}/template/study_template/wmfod/MNI-wmfod_template_warp.nii.gz
+
 mri_synthmorph \
   apply \
   -m nearest ${fba}/template/study_template/wmfod/MNI-wmfod_template_warp.nii.gz \
@@ -35,11 +47,17 @@ mri_synthmorph \
 
 tckgen \
   ${fba}/template/study_template/wmfod/wmfod_template.mif \
- ${fba}/template/study_template/tracts/dn-nmap.tck \
-  -seed_image ${fba}/template/study_template/tracts/R_DN.mif \
-  -select 10000 \
-  -include ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
-  -seed_unidirectional -stop
+  ${fba}/template/study_template/tracts/nmap-tracts.tck \
+  -seed_image ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
+  -select 200000
+  
+  #-include ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
+  #-seed_unidirectional -stop
+
+tckedit the 2million SIFT with in.tck out.tck -include
+tck2fixel
+fixel2voxel
+run this with ficelcfe
 
 
 
