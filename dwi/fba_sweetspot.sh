@@ -45,25 +45,14 @@ mri_synthmorph \
   ${fba}/template/study_template/tracts/nmap_thr.nii.gz \
   ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz
 
-tckgen \
-  ${fba}/template/study_template/wmfod/wmfod_template.mif \
-  ${fba}/template/study_template/tracts/nmap-tracts.tck \
-  -seed_image ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
-  -select 200000
-  
-  #-include ${fba}/template/study_template/tracts/nmap_thr-wmfod.nii.gz \
-  #-seed_unidirectional -stop
-
 tckedit the 2million SIFT with in.tck out.tck -include
-tck2fixel
-fixel2voxel
-run this with ficelcfe
-
+tck2fixel - run this with fixelcfestats
 
 
 # Metrics for the nmap GAMM
 
 # Output CSV
+hemis=${sf}/fba/hemis.txt
 combined_csv="${fba}/analysis/sweetspot/combined_metrics_long.csv"
 echo "sub-id,timepoint,metric,value" > "${combined_csv}"
 
